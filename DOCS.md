@@ -53,9 +53,9 @@ Which files to edit for each feature. All backend files live in `backend/routes/
 |---|---|---|---|---|---|---|
 | Auth (login/logout) | — | TBD | `routes/auth.js` | `LoginView.vue` | `api/auth.js` | ✅ Done |
 | Search Books / Archives | F1 | TBD | `routes/search.js` | `SearchView.vue` | `api/search.js` | Stub |
-| Create Discussion Post or Review | F2 | TBD | `routes/compose.js` | `ComposeView.vue` | `api/compose.js` | Stub |
+| COMPOSE (Create Discussion Post or Review) | F2 | An | `routes/compose.js` | `ComposeView.vue` | `api/compose.js` | Stub |
 | Feed | F3 | TBD | `routes/feed.js` | `FeedView.vue` | `api/feed.js` | Stub |
-| Thread Detail / Delete | F4 | TBD | `routes/thread.js` | `ThreadView.vue` | `api/thread.js` | Stub — blocked by CASCADE fix |
+| Thread Detail / Delete | F4 | An | `routes/thread.js` | `ThreadView.vue` | `api/thread.js` | Stub — blocked by CASCADE fix |
 | My Books | F5 | TBD | `routes/books.js` | `MyBooksView.vue` | `api/books.js` | Stub — uses `Rates.Rating` |
 | Invitations | F6 | TBD | `routes/invitations.js` | `InvitationsView.vue` | `api/invitations.js` | Stub — needs Triggers 2 & 3 |
 | Communities | F7 | TBD | `routes/communities.js` | `CommunitiesView.vue` | `api/communities.js` | Stub |
