@@ -52,6 +52,8 @@ Which files to edit for each feature. All backend files live in `backend/routes/
 | Feature | ID | Owner | Backend file | Frontend view | Frontend API file | Status |
 |---|---|---|---|---|---|---|
 | Auth (login/logout) | — | TBD | `routes/auth.js` | `LoginView.vue` | `api/auth.js` | ✅ Done |
+| Search Books / Archives | F1 | TBD | `routes/search.js` | `SearchView.vue` | `api/search.js` | Stub |
+| Create Discussion Post or Review | F2 | TBD | `routes/compose.js` | `ComposeView.vue` | `api/compose.js` | Stub |
 | Feed | F3 | TBD | `routes/feed.js` | `FeedView.vue` | `api/feed.js` | Stub |
 | Thread Detail / Delete | F4 | TBD | `routes/thread.js` | `ThreadView.vue` | `api/thread.js` | Stub — blocked by CASCADE fix |
 | My Books | F5 | TBD | `routes/books.js` | `MyBooksView.vue` | `api/books.js` | Stub — uses `Rates.Rating` |
@@ -59,8 +61,6 @@ Which files to edit for each feature. All backend files live in `backend/routes/
 | Communities | F7 | TBD | `routes/communities.js` | `CommunitiesView.vue` | `api/communities.js` | Stub |
 | Discover | F8 | TBD | `routes/discover.js` | `DiscoverView.vue` | `api/discover.js` | Stub — division query + GROUP BY |
 | Profile | F9 | TBD | `routes/profile.js` | `ProfileView.vue` | `api/profile.js` | Stub |
-| Search | — | TBD | `routes/search.js` | `SearchView.vue` | `api/search.js` | Stub |
-| Compose | — | TBD | `routes/compose.js` | `ComposeView.vue` | `api/compose.js` | Stub |
 
 ---
 

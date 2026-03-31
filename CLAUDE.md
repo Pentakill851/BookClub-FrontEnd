@@ -54,19 +54,21 @@ Never commit `.env`. The `.env.example` file committed to the repo must match th
 
 Track which features are implemented. Update this whenever a feature ships.
 
-| ID  | Feature           | Backend | Frontend | Notes                                    |
-|-----|-------------------|---------|----------|------------------------------------------|
-| F3  | Feed              | ❌      | ❌       |                                          |
-| F4  | Thread Detail     | ❌      | ❌       | Blocked until CASCADE fix in init.sql    |
-| F5  | My Books          | ❌      | ❌       | Uses `Rates.Rating`, not `BookReview`    |
-| F6  | Invitations       | ❌      | ❌       | Requires Triggers 2 & 3                  |
-| F7  | Communities       | ❌      | ❌       |                                          |
-| F8  | Discover          | ❌      | ❌       | Division query + GROUP BY aggregation    |
-| F9  | Profile           | ❌      | ❌       |                                          |
-| —   | Auth (Login/out)  | ✅      | ✅       |                                          |
-| —   | Trigger 1         | ❌      | —        | Moderator must be a member               |
-| —   | Trigger 2         | ❌      | —        | Auto-join on invitation accept           |
-| —   | Trigger 3         | ❌      | —        | TBD — document here when decided         |
+| ID  | Feature                          | Backend | Frontend | Notes                                    |
+|-----|----------------------------------|---------|----------|------------------------------------------|
+| —   | Auth (Login/out)                 | ✅      | ✅       |                                          |
+| F1  | Search Books / Archives          | ❌      | ❌       |                                          |
+| F2  | Create Discussion Post or Review | ❌      | ❌       |                                          |
+| F3  | Feed                             | ❌      | ❌       |                                          |
+| F4  | Thread Detail                    | ❌      | ❌       | Blocked until CASCADE fix in init.sql    |
+| F5  | My Books                         | ❌      | ❌       | Uses `Rates.Rating`, not `BookReview`    |
+| F6  | Invitations                      | ❌      | ❌       | Requires Triggers 2 & 3                  |
+| F7  | Communities                      | ❌      | ❌       |                                          |
+| F8  | Discover                         | ❌      | ❌       | Division query + GROUP BY aggregation    |
+| F9  | Profile                          | ❌      | ❌       |                                          |
+| —   | Trigger 1                        | ❌      | —        | Moderator must be a member               |
+| —   | Trigger 2                        | ❌      | —        | Auto-join on invitation accept           |
+| —   | Trigger 3                        | ❌      | —        | TBD — document here when decided         |
 
 ---
 
