@@ -69,17 +69,25 @@ function formatDate(iso) {
 
 async function handleInvite(inviteID, action) {
   pendingID.value = inviteID
-  if (action === 'accept') {
-    await acceptInvitation(inviteID)
-  } else {
-    await declineInvitation(inviteID)
+  try {
+    if (action === 'accept') {
+      await acceptInvitation(inviteID)
+    } else {
+      await declineInvitation(inviteID)
+    }
+    invitations.value = invitations.value.filter(i => i.InviteID !== inviteID)
+  } finally {
+    pendingID.value = null
   }
-  invitations.value = invitations.value.filter(i => i.InviteID !== inviteID)
-  pendingID.value = null
 }
 
 onMounted(async () => {
-  invitations.value = await getInvitations()
-  loading.value = false
+  try {
+    invitations.value = await getInvitations()
+  } catch {
+    invitations.value = []
+  } finally {
+    loading.value = false
+  }
 })
 </script>

@@ -9,13 +9,14 @@ const FINAL_STATUSES = new Set(['Accepted', 'Declined'])
 router.get('/', requireAuth, async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      `SELECT i.InviteID AS inviteId, i.Status AS status, i.Timestamp AS inviteTimestamp,
-              i.ClubID AS clubId, c.Name AS clubName,
-              i.SenderUserID AS senderUserId, u.Username AS senderUsername
+      `SELECT i.InviteID AS InviteID, i.ClubID AS ClubID, c.Name AS ClubName,
+              COALESCE(u.Username, 'A member') AS InvitedBy,
+              i.Timestamp AS SentAt
        FROM Invitation i
        LEFT JOIN Club c ON c.ClubID = i.ClubID
        LEFT JOIN User u ON u.UserID = i.SenderUserID
        WHERE i.ReceiverUserID = ?
+         AND (i.Status = 'Pending' OR i.Status IS NULL)
        ORDER BY i.Timestamp DESC`,
       [req.session.userID]
     )
@@ -85,7 +86,7 @@ router.put('/:id', requireAuth, async (req, res) => {
 
     await conn.commit()
     res.json({
-      data: { inviteId, status: normalized, clubId: inv.ClubID },
+      data: { success: true, inviteID: inviteId, status: normalized, ClubID: inv.ClubID },
       error: null
     })
   } catch (err) {

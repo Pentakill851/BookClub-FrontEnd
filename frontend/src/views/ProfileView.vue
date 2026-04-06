@@ -5,6 +5,10 @@
       <div class="w-10 h-10 border-4 border-amber-100 border-t-amber-700 rounded-full animate-spin"></div>
     </div>
 
+    <div v-else-if="!profile" class="text-center py-24 text-stone-500">
+      Could not load profile. Try signing in again.
+    </div>
+
     <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
       <!-- profile card stuck to the left side -->
@@ -16,7 +20,7 @@
           </div>
           <h1 class="text-xl font-bold text-stone-900">{{ profile.Username }}</h1>
           <p class="text-sm text-stone-500 mt-0.5">{{ profile.Email }}</p>
-          <p class="text-xs text-stone-400 mt-2">Member since {{ formatJoinDate(profile.JoinDate) }}</p>
+          <p class="text-xs text-stone-400 mt-2">Member since {{ profile.JoinDate ? formatJoinDate(profile.JoinDate) : '—' }}</p>
 
           <button class="mt-5 w-full border border-stone-200 text-stone-600 text-sm font-medium py-2 rounded-xl hover:bg-stone-50 transition flex items-center justify-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -88,7 +92,7 @@
                 class="w-12 h-16 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shadow-inner shrink-0"
                 :class="genreColor(book.Genre)"
               >
-                {{ book.Genre.substring(0, 3).toUpperCase() }}
+                {{ (book.Genre || 'Book').substring(0, 3).toUpperCase() }}
               </div>
               <div class="flex flex-col justify-center min-w-0">
                 <div class="font-semibold text-stone-900 text-sm leading-tight truncate">{{ book.Title }}</div>
@@ -198,19 +202,23 @@ function genreColor(genre) {
 }
 
 onMounted(async () => {
-  const userID = 1 // placeholder until auth is actually set up
-  const [p, s, b, r, c] = await Promise.all([
-    getProfile(userID),
-    getProfileStats(userID),
-    getProfileBooks(userID),
-    getProfileReviews(userID),
-    getProfileClubs(userID),
-  ])
-  profile.value = p
-  stats.value = s
-  books.value = b
-  reviews.value = r
-  clubs.value = c
-  loading.value = false
+  try {
+    const [p, s, b, r, c] = await Promise.all([
+      getProfile(),
+      getProfileStats(),
+      getProfileBooks(),
+      getProfileReviews(),
+      getProfileClubs(),
+    ])
+    profile.value = p
+    stats.value = s
+    books.value = b
+    reviews.value = r
+    clubs.value = c
+  } catch {
+    profile.value = null
+  } finally {
+    loading.value = false
+  }
 })
 </script>

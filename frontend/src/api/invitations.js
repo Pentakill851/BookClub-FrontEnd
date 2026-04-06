@@ -1,18 +1,30 @@
-const DELAY = 500
-
-export function getInvitations() {
-  return new Promise(resolve =>
-    setTimeout(() => resolve([
-      { InviteID: 5, ClubName: 'Mystery Solvers', ClubID: 4, InvitedBy: 'Dana', SentAt: '2026-04-03T14:00:00' },
-      { InviteID: 6, ClubName: 'Local Authors', ClubID: 5, InvitedBy: 'Evan', SentAt: '2026-04-04T09:30:00' },
-    ]), DELAY)
-  )
+async function api(path, options = {}) {
+  const res = await fetch(path, {
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...options.headers },
+    ...options
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok || json.error) {
+    throw new Error(json.error || `Request failed (${res.status})`)
+  }
+  return json.data
 }
 
-export function acceptInvitation(inviteID) {
-  return new Promise(resolve => setTimeout(() => resolve({ success: true, inviteID }), DELAY))
+export async function getInvitations() {
+  return api('/api/invitations')
 }
 
-export function declineInvitation(inviteID) {
-  return new Promise(resolve => setTimeout(() => resolve({ success: true, inviteID }), DELAY))
+export async function acceptInvitation(inviteID) {
+  return api(`/api/invitations/${inviteID}`, {
+    method: 'PUT',
+    body: JSON.stringify({ status: 'Accepted' })
+  })
+}
+
+export async function declineInvitation(inviteID) {
+  return api(`/api/invitations/${inviteID}`, {
+    method: 'PUT',
+    body: JSON.stringify({ status: 'Declined' })
+  })
 }

@@ -78,7 +78,7 @@
             class="h-36 flex items-center justify-center text-2xl font-bold text-white"
             :class="genreColor(book.Genre)"
           >
-            {{ book.Genre.substring(0, 3).toUpperCase() }}
+            {{ (book.Genre || 'Book').substring(0, 3).toUpperCase() }}
           </div>
 
           <div class="p-4 flex flex-col flex-1">
@@ -166,7 +166,12 @@ function genreColor(genre) {
 }
 
 onMounted(async () => {
-  books.value = await getMyBooks()
-  loading.value = false
+  try {
+    books.value = await getMyBooks()
+  } catch {
+    books.value = []
+  } finally {
+    loading.value = false
+  }
 })
 </script>

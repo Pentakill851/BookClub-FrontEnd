@@ -196,7 +196,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getMyCommmunities, getPublicCommunities, joinClub, createClub } from '../api/communities.js'
+import { getMyCommunities, getPublicCommunities, joinClub, createClub } from '../api/communities.js'
 
 const loading = ref(true)
 const activeTab = ref('mine')
@@ -230,25 +230,37 @@ function clubColor(id) {
 async function handleCreateClub() {
   if (!newClub.value.name.trim()) return
   creating.value = true
-  const club = await createClub(newClub.value)
-  myClubs.value.push(club)
-  showCreateModal.value = false
-  newClub.value = { name: '', description: '', type: 'Public', passcode: '' }
-  creating.value = false
+  try {
+    const club = await createClub(newClub.value)
+    myClubs.value.push(club)
+    showCreateModal.value = false
+    newClub.value = { name: '', description: '', type: 'Public', passcode: '' }
+  } finally {
+    creating.value = false
+  }
 }
 
 async function handleJoin(club) {
   if (joinedIDs.value.has(club.ClubID)) return
   joiningID.value = club.ClubID
-  await joinClub(club.ClubID)
-  joinedIDs.value = new Set([...joinedIDs.value, club.ClubID])
-  joiningID.value = null
+  try {
+    await joinClub(club.ClubID)
+    joinedIDs.value = new Set([...joinedIDs.value, club.ClubID])
+  } finally {
+    joiningID.value = null
+  }
 }
 
 onMounted(async () => {
-  const [mine, pub] = await Promise.all([getMyCommmunities(), getPublicCommunities()])
-  myClubs.value = mine
-  publicClubs.value = pub
-  loading.value = false
+  try {
+    const [mine, pub] = await Promise.all([getMyCommunities(), getPublicCommunities()])
+    myClubs.value = mine
+    publicClubs.value = pub
+  } catch {
+    myClubs.value = []
+    publicClubs.value = []
+  } finally {
+    loading.value = false
+  }
 })
 </script>
