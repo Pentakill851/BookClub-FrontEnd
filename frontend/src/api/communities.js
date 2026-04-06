@@ -29,7 +29,7 @@ export function joinClub(clubID) {
 }
 
 export function joinPrivateClub(clubID, passcode) {
-  // mock passcodes: 'scifi123' for club 1, 'clue456' for club 4
+  // test passcodes for dev, scifi123 and clue456 work
   return new Promise((resolve, reject) =>
     setTimeout(() => {
       if (passcode === 'scifi123' || passcode === 'clue456') {

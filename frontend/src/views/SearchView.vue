@@ -1,7 +1,7 @@
 <template>
   <main class="flex-1 max-w-[90rem] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    <!-- Search header -->
+    <!-- search bar at the top, centered looks cleaner -->
     <div class="max-w-2xl mx-auto mb-8">
       <h1 class="text-2xl font-bold text-stone-900 mb-1" style="font-family: Merriweather, serif;">The Archives</h1>
       <p class="text-sm text-stone-500 mb-6">Search books, discussions, and clubs.</p>
@@ -19,7 +19,7 @@
         >
       </div>
 
-      <!-- Tabs -->
+      <!-- toggle between books and threads -->
       <div class="flex gap-6 mt-6 border-b border-stone-200">
         <button
           v-for="tab in tabs"
@@ -38,12 +38,12 @@
       </div>
     </div>
 
-    <!-- Loading -->
+    <!-- spinning while results come back -->
     <div v-if="loading" class="flex justify-center py-16">
       <div class="w-8 h-8 border-4 border-amber-100 border-t-amber-700 rounded-full animate-spin"></div>
     </div>
 
-    <!-- Books tab -->
+    <!-- book results laid out as cards -->
     <div v-else-if="activeTab === 'books'">
       <div v-if="bookResults.length === 0" class="text-center py-16 text-stone-400">
         <svg class="w-12 h-12 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
@@ -56,7 +56,7 @@
           :key="book.ISBN"
           class="bg-white rounded-2xl border border-stone-200/60 shadow-sm hover:shadow-md transition p-5 flex flex-col gap-3 cursor-pointer group"
         >
-          <!-- Book spine mock -->
+          <!-- fake cover using genre abbreviation -->
           <div
             class="w-full h-36 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-inner"
             :class="genreColor(book.Genre)"
@@ -80,7 +80,7 @@
       </div>
     </div>
 
-    <!-- Threads tab -->
+    <!-- thread results as a compact list -->
     <div v-else-if="activeTab === 'threads'">
       <div v-if="threadResults.length === 0" class="text-center py-16 text-stone-400">
         <svg class="w-12 h-12 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>

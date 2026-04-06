@@ -1,7 +1,7 @@
 <template>
   <main class="flex-1 max-w-[90rem] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    <!-- Header -->
+    <!-- library title and shortcut to add books -->
     <div class="flex items-end justify-between mb-8">
       <div>
         <h1 class="text-2xl font-bold text-stone-900" style="font-family: Merriweather, serif;">My Library</h1>
@@ -16,14 +16,14 @@
       </RouterLink>
     </div>
 
-    <!-- Loading -->
+    <!-- spinner while books fetch -->
     <div v-if="loading" class="flex justify-center py-24">
       <div class="w-10 h-10 border-4 border-amber-100 border-t-amber-700 rounded-full animate-spin"></div>
     </div>
 
     <div v-else>
 
-      <!-- Stats row -->
+      <!-- quick reading counts at a glance -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-5 text-center">
           <div class="text-2xl font-bold text-stone-900">{{ books.length }}</div>
@@ -43,7 +43,7 @@
         </div>
       </div>
 
-      <!-- Filter tabs -->
+      <!-- filter down by reading status -->
       <div class="flex gap-2 mb-6 flex-wrap">
         <button
           v-for="f in filters"
@@ -59,21 +59,21 @@
         </button>
       </div>
 
-      <!-- Empty state -->
+      <!-- nothing to show for this filter -->
       <div v-if="filteredBooks.length === 0" class="text-center py-20 text-stone-400">
         <svg class="w-12 h-12 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
         <p class="font-medium">No books in this list yet.</p>
         <RouterLink to="/search" class="mt-2 inline-block text-amber-700 hover:underline text-sm">Search the archives to add some →</RouterLink>
       </div>
 
-      <!-- Book grid -->
+      <!-- the actual books laid out as cards -->
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         <div
           v-for="book in filteredBooks"
           :key="book.ISBN"
           class="bg-white rounded-2xl border border-stone-200/60 shadow-sm hover:shadow-md transition flex flex-col overflow-hidden group"
         >
-          <!-- Book spine -->
+          <!-- colored block pretending to be a book cover -->
           <div
             class="h-36 flex items-center justify-center text-2xl font-bold text-white"
             :class="genreColor(book.Genre)"
@@ -85,7 +85,7 @@
             <h3 class="font-bold text-stone-900 text-sm leading-tight group-hover:text-amber-700 transition">{{ book.Title }}</h3>
             <p class="text-xs text-stone-500 mt-0.5 mb-3">{{ book.Author }} · {{ book.PublishedYear }}</p>
 
-            <!-- Status selector -->
+            <!-- dropdown to update reading status -->
             <div class="mt-auto space-y-3">
               <select
                 :value="book.Status"
@@ -102,7 +102,7 @@
                 <option value="Want to Read">Want to Read</option>
               </select>
 
-              <!-- Star rating -->
+              <!-- clickable stars for personal rating -->
               <div class="flex items-center gap-1">
                 <button
                   v-for="star in 5"

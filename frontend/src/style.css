@@ -1,4 +1,4 @@
-/* fonts first or tailwind overrides them */
+/* fonts first or else tailwind overrides them */
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&display=swap');
 
 @import "tailwindcss";
@@ -19,7 +19,7 @@ aside h3.text-sm {
   color: #1f2937 !important;
 }
 
-/* cards should feel like paper pages not plastic */
+/* hopfully cards feel like paper pages not plastic */
 .bg-white {
   background-color: #FFFFFF !important;
   border-color: #F2EFE9 !important;

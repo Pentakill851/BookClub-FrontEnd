@@ -1,7 +1,7 @@
 <template>
   <main class="flex-1 max-w-[90rem] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    <!-- Header -->
+    <!-- title and create button at the top -->
     <div class="flex items-end justify-between mb-8">
       <div>
         <h1 class="text-2xl font-bold text-stone-900" style="font-family: Merriweather, serif;">Communities</h1>
@@ -16,7 +16,7 @@
       </button>
     </div>
 
-    <!-- Tabs -->
+    <!-- mine vs discover tabs -->
     <div class="flex gap-6 border-b border-stone-200 mb-8">
       <button
         v-for="tab in tabs"
@@ -31,12 +31,12 @@
       </button>
     </div>
 
-    <!-- Loading -->
+    <!-- just spin while data loads -->
     <div v-if="loading" class="flex justify-center py-24">
       <div class="w-10 h-10 border-4 border-amber-100 border-t-amber-700 rounded-full animate-spin"></div>
     </div>
 
-    <!-- My Clubs -->
+    <!-- clubs the user already belongs to -->
     <div v-else-if="activeTab === 'mine'">
       <div v-if="myClubs.length === 0" class="text-center py-20 text-stone-400">
         <p class="font-medium">You haven't joined any clubs yet.</p>
@@ -48,7 +48,7 @@
           :key="club.ClubID"
           class="bg-white rounded-2xl border border-stone-200/60 shadow-sm hover:shadow-md transition p-5 flex flex-col gap-4"
         >
-          <!-- Club avatar -->
+          <!-- little initial block for each club -->
           <div class="flex items-start justify-between">
             <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-stone-700 to-stone-900 flex items-center justify-center font-bold text-white text-lg shadow-sm">
               {{ club.Name.charAt(0) }}
@@ -88,7 +88,7 @@
       </div>
     </div>
 
-    <!-- Discover -->
+    <!-- browsing public clubs to join -->
     <div v-else-if="activeTab === 'discover'">
       <div class="relative mb-6 max-w-sm">
         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -138,7 +138,7 @@
       </div>
     </div>
 
-    <!-- Create club modal -->
+    <!-- popup form when they want to start a new club -->
     <Transition enter-from-class="opacity-0" enter-active-class="transition duration-200" leave-to-class="opacity-0" leave-active-class="transition duration-200">
       <div v-if="showCreateModal" class="fixed inset-0 bg-stone-900/50 z-50 flex items-center justify-center p-4" @click.self="showCreateModal = false">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-5">

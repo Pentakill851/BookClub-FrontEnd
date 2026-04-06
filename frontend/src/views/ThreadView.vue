@@ -1,19 +1,19 @@
 <template>
   <main class="flex-1 max-w-[90rem] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    <!-- Back link -->
+    <!-- let them get back to the feed -->
     <RouterLink to="/" class="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-amber-700 transition mb-6">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
       Back to Feed
     </RouterLink>
 
-    <!-- Loading -->
+    <!-- waiting on thread and messages to load -->
     <div v-if="loading" class="flex flex-col items-center justify-center py-32 space-y-4">
       <div class="w-10 h-10 border-4 border-amber-100 border-t-amber-700 rounded-full animate-spin"></div>
       <div class="text-stone-500 text-sm">Loading thread...</div>
     </div>
 
-    <!-- Not found -->
+    <!-- thread doesn't exist, handle gracefully -->
     <div v-else-if="!thread" class="text-center py-24 text-stone-400">
       <p class="text-lg font-medium">Thread not found.</p>
       <RouterLink to="/" class="mt-4 inline-block text-amber-700 hover:underline text-sm">Return to feed</RouterLink>
@@ -21,10 +21,10 @@
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-      <!-- Main content -->
+      <!-- thread and replies take most of the page -->
       <div class="lg:col-span-8 space-y-6">
 
-        <!-- Thread header card -->
+        <!-- the original post at the top -->
         <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-6">
           <div class="flex justify-between items-start mb-5">
             <div class="flex items-center gap-2 text-xs font-medium text-stone-500">
@@ -32,7 +32,7 @@
               <span class="text-stone-300">&bull;</span>
               <span>Discussing: <em class="text-stone-700 font-medium">"{{ thread.BookTitle }}"</em></span>
             </div>
-            <!-- Delete button — visible if current user is the thread author -->
+            <!-- only show delete if it's your own thread -->
             <button
               v-if="thread.AuthorID === currentUserID"
               @click="confirmDelete"
@@ -62,7 +62,7 @@
           </div>
         </div>
 
-        <!-- Messages -->
+        <!-- replies below the thread -->
         <div class="space-y-4">
           <h2 class="text-sm font-bold text-stone-900 uppercase tracking-wider text-xs flex items-center gap-2">
             <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
@@ -93,7 +93,7 @@
           </div>
         </div>
 
-        <!-- Reply box -->
+        <!-- box for writing a reply -->
         <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-5">
           <h3 class="text-sm font-bold text-stone-900 mb-4">Leave a Reply</h3>
           <div class="flex gap-3">
@@ -123,7 +123,7 @@
 
       </div>
 
-      <!-- Right sidebar: book info -->
+      <!-- book and club info stuck to the side -->
       <aside class="lg:col-span-4 space-y-5 sticky top-24">
         <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-5">
           <h3 class="text-xs font-bold uppercase tracking-wider text-stone-500 mb-4">About This Book</h3>
@@ -153,7 +153,7 @@
           <p class="text-xs text-stone-400 mt-0.5">This thread was posted in this club's reading room.</p>
         </div>
 
-        <!-- Delete confirmation modal -->
+        <!-- confirm before nuking the thread -->
         <div v-if="showDeleteConfirm" class="bg-red-50 border border-red-200 rounded-2xl p-5">
           <h3 class="font-bold text-red-800 text-sm mb-2">Delete this thread?</h3>
           <p class="text-xs text-red-600 mb-4">This will remove the thread and all its messages permanently.</p>
@@ -180,7 +180,7 @@ import { getThread, getMessages, postMessage, deleteThread } from '../api/thread
 const route = useRoute()
 const router = useRouter()
 
-const currentUserID = 1 // hardcoded until auth is wired
+const currentUserID = 1 // placeholder until real auth gets wired up
 const loading = ref(true)
 const thread = ref(null)
 const messages = ref([])

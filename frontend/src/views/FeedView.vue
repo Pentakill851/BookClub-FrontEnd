@@ -8,7 +8,7 @@
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-      <!-- Left sidebar -->
+      <!-- user's profile and clubs over here -->
       <aside class="lg:col-span-3 space-y-6 sticky top-24">
 
         <div class="bg-white rounded-2xl shadow-sm border border-stone-200/60 p-6 text-center">
@@ -64,7 +64,7 @@
         </div>
       </aside>
 
-      <!-- Center feed -->
+      <!-- main feed in the middle -->
       <div class="lg:col-span-6 space-y-6">
 
         <div class="bg-white rounded-2xl shadow-sm border border-stone-200/60 p-5 flex gap-4">
@@ -156,7 +156,7 @@
         </div>
       </div>
 
-      <!-- Right sidebar -->
+      <!-- books and club suggestions on the right -->
       <aside class="lg:col-span-3 space-y-6 sticky top-24">
 
         <div class="bg-white rounded-2xl shadow-sm border border-stone-200/60 p-5">

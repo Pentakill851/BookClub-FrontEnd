@@ -7,7 +7,7 @@
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-      <!-- Left: profile card -->
+      <!-- profile card stuck to the left side -->
       <aside class="lg:col-span-3 space-y-5 sticky top-24">
 
         <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-6 text-center">
@@ -24,7 +24,7 @@
           </button>
         </div>
 
-        <!-- Stats -->
+        <!-- reading numbers at a glance -->
         <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-5">
           <h3 class="text-xs font-bold uppercase tracking-wider text-stone-500 mb-4">Reading Stats</h3>
           <div class="space-y-3">
@@ -58,10 +58,10 @@
 
       </aside>
 
-      <!-- Right: tabs content -->
+      <!-- main content area switches by tab -->
       <div class="lg:col-span-9 space-y-6">
 
-        <!-- Tabs -->
+        <!-- books, reviews, clubs navigation -->
         <div class="flex gap-6 border-b border-stone-200">
           <button
             v-for="tab in tabs"
@@ -76,7 +76,7 @@
           </button>
         </div>
 
-        <!-- Reading List tab -->
+        <!-- books in this user's library -->
         <div v-if="activeTab === 'books'">
           <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             <div
@@ -111,7 +111,7 @@
           </div>
         </div>
 
-        <!-- Reviews tab -->
+        <!-- reviews they've written -->
         <div v-else-if="activeTab === 'reviews'">
           <div v-if="reviews.length === 0" class="text-center py-16 text-stone-400">
             <p class="font-medium">No reviews yet.</p>
@@ -139,7 +139,7 @@
           </div>
         </div>
 
-        <!-- Clubs tab -->
+        <!-- clubs they're a part of -->
         <div v-else-if="activeTab === 'clubs'">
           <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             <div
@@ -198,7 +198,7 @@ function genreColor(genre) {
 }
 
 onMounted(async () => {
-  const userID = 1 // hardcoded until auth is wired
+  const userID = 1 // placeholder until auth is actually set up
   const [p, s, b, r, c] = await Promise.all([
     getProfile(userID),
     getProfileStats(userID),

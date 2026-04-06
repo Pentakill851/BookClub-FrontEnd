@@ -8,7 +8,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-      <!-- Form -->
+      <!-- all the input fields on the left -->
       <div class="lg:col-span-7 space-y-6">
 
         <div>
@@ -16,7 +16,7 @@
           <p class="text-sm text-stone-500 mt-1">Start a discussion or log a book review.</p>
         </div>
 
-        <!-- Mode toggle -->
+        <!-- discussion or review, pick one -->
         <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-1.5 flex gap-1">
           <button
             @click="mode = 'discussion'"
@@ -40,7 +40,7 @@
           </button>
         </div>
 
-        <!-- Book selector -->
+        <!-- search and pick a book to attach -->
         <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-5 space-y-3">
           <label class="text-sm font-semibold text-stone-900 flex items-center gap-2">
             <svg class="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
@@ -85,7 +85,7 @@
           </div>
         </div>
 
-        <!-- Club selector -->
+        <!-- which club this post is going into -->
         <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-5 space-y-3">
           <label class="text-sm font-semibold text-stone-900 flex items-center gap-2">
             <svg class="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -110,7 +110,7 @@
           </div>
         </div>
 
-        <!-- Topic -->
+        <!-- the post title basically -->
         <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-5 space-y-3">
           <label class="text-sm font-semibold text-stone-900">
             Topic / Title
@@ -125,7 +125,7 @@
           >
         </div>
 
-        <!-- Star rating (review only) -->
+        <!-- stars only appear for review mode -->
         <div v-if="mode === 'review'" class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-5 space-y-3">
           <label class="text-sm font-semibold text-stone-900">
             Your Rating
@@ -145,7 +145,7 @@
           </div>
         </div>
 
-        <!-- Content -->
+        <!-- the actual body of the post -->
         <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-5 space-y-3">
           <label class="text-sm font-semibold text-stone-900">
             {{ mode === 'review' ? 'Your Review' : 'Opening Message' }}
@@ -162,7 +162,7 @@
           <div class="text-xs text-stone-400 text-right">{{ content.length }} characters</div>
         </div>
 
-        <!-- Submit -->
+        <!-- validation error message and publish button -->
         <div class="flex items-center justify-between">
           <p v-if="formError" class="text-sm text-red-600 flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -180,7 +180,7 @@
         </div>
       </div>
 
-      <!-- Preview -->
+      <!-- live preview of how it looks in the feed -->
       <aside class="lg:col-span-5 sticky top-24">
         <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm overflow-hidden">
           <div class="px-5 py-3 border-b border-stone-100 flex items-center justify-between">
@@ -189,7 +189,7 @@
           </div>
 
           <div class="p-6">
-            <!-- Club & book badge -->
+            <!-- preview header showing the club and cited book -->
             <div class="flex items-center gap-2 text-xs font-medium text-stone-500 mb-4">
               <span class="text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-md border border-amber-100">
                 {{ selectedClubName || 'Select a club...' }}
@@ -218,7 +218,7 @@
           </div>
         </div>
 
-        <!-- Tips -->
+        <!-- some quick writing tips below the preview -->
         <div class="mt-4 bg-stone-50 rounded-2xl border border-stone-200/60 p-4 space-y-2">
           <p class="text-xs font-bold text-stone-600 uppercase tracking-wider">Tips</p>
           <ul class="space-y-1.5 text-xs text-stone-500">
@@ -231,7 +231,7 @@
 
     </div>
 
-    <!-- Success toast -->
+    <!-- flash a success message then redirect -->
     <Transition enter-from-class="opacity-0 translate-y-4" enter-active-class="transition duration-300" leave-to-class="opacity-0 translate-y-4" leave-active-class="transition duration-300">
       <div v-if="showSuccess" class="fixed bottom-6 right-6 bg-stone-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-sm font-medium">
         <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
