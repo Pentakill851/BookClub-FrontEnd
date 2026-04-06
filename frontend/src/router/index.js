@@ -1,71 +1,23 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { getMe } from '@/api/auth.js'
+import FeedView from '../views/FeedView.vue'
+import SearchView from '../views/SearchView.vue'
+import ThreadView from '../views/ThreadView.vue'
+import MyBooksView from '../views/MyBooksView.vue'
+import ComposeView from '../views/ComposeView.vue'
+import CommunitiesView from '../views/CommunitiesView.vue'
+import ProfileView from '../views/ProfileView.vue'
 
 const routes = [
-  {
-    path: '/login',
-    component: () => import('@/views/LoginView.vue')
-  },
-  {
-    path: '/',
-    component: () => import('@/views/FeedView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/search',
-    component: () => import('@/views/SearchView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/compose',
-    component: () => import('@/views/ComposeView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/thread/:id',
-    component: () => import('@/views/ThreadView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/my-books',
-    component: () => import('@/views/MyBooksView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/invitations',
-    component: () => import('@/views/InvitationsView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/communities',
-    component: () => import('@/views/CommunitiesView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/discover',
-    component: () => import('@/views/DiscoverView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/profile',
-    component: () => import('@/views/ProfileView.vue'),
-    meta: { requiresAuth: true }
-  }
+  { path: '/', name: 'feed', component: FeedView },
+  { path: '/search', name: 'search', component: SearchView },
+  { path: '/thread/:id', name: 'thread', component: ThreadView },
+  { path: '/my-books', name: 'my-books', component: MyBooksView },
+  { path: '/compose', name: 'compose', component: ComposeView },
+  { path: '/communities', name: 'communities', component: CommunitiesView },
+  { path: '/profile', name: 'profile', component: ProfileView },
 ]
 
-const router = createRouter({
+export default createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 })
-
-router.beforeEach(async (to, from, next) => {
-  if (to.meta.requiresAuth) {
-    const result = await getMe()
-    if (!result.data) {
-      return next('/login')
-    }
-  }
-  next()
-})
-
-export default router
