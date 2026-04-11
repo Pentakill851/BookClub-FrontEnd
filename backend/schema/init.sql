@@ -88,7 +88,7 @@ CREATE TABLE `Message` (
   `Timestamp` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`ThreadID`,`MessageNum`),
   KEY `UserID` (`UserID`),
-  CONSTRAINT `Message_ibfk_1` FOREIGN KEY (`ThreadID`) REFERENCES `Thread` (`ThreadID`),
+  CONSTRAINT `Message_ibfk_1` FOREIGN KEY (`ThreadID`) REFERENCES `Thread` (`ThreadID`) ON DELETE CASCADE,
   CONSTRAINT `Message_ibfk_2` FOREIGN KEY (`UserID`) REFERENCES `User` (`UserID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -180,3 +180,36 @@ CREATE TABLE `User` (
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- MIGRATION: Run on live DB to fix Message CASCADE
+-- ALTER TABLE Message DROP FOREIGN KEY Message_ibfk_1;
+-- ALTER TABLE Message ADD CONSTRAINT Message_ibfk_1
+--   FOREIGN KEY (ThreadID) REFERENCES Thread(ThreadID) ON DELETE CASCADE;
+
+-- Trigger 1: Moderator must be a member
+DELIMITER //
+CREATE TRIGGER check_moderator_is_member
+BEFORE INSERT ON Moderates
+FOR EACH ROW
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM Joins WHERE UserID = NEW.UserID AND ClubID = NEW.ClubID
+  ) THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Moderator must be a member of the club';
+  END IF;
+END//
+DELIMITER ;
+
+-- Trigger 2: Auto-join on invitation accept
+DELIMITER //
+CREATE TRIGGER auto_join_on_accept
+AFTER UPDATE ON Invitation
+FOR EACH ROW
+BEGIN
+  IF NEW.Status = 'Accepted' AND OLD.Status != 'Accepted' THEN
+    INSERT IGNORE INTO Joins (UserID, ClubID, JoinDate)
+    VALUES (NEW.ReceiverUserID, NEW.ClubID, CURDATE());
+  END IF;
+END//
+DELIMITER ;

@@ -23,21 +23,17 @@ CMPT 354 Course Project. MySQL + Express + Vue 3 book club platform.
 
 ## ⚠️ Read this before you start
 
-### CASCADE fix required before F4 (Thread Detail)
+### CASCADE fix — ✅ Added to init.sql — apply migration to live DB
 
-`init.sql` declares `Message_ibfk_1` **without** `ON DELETE CASCADE`. Deleting a Thread that has Messages will throw a FK constraint error. Fix this constraint in the DB before writing any Thread delete logic:
+`Message_ibfk_1` now includes `ON DELETE CASCADE` in init.sql. Apply the migration comment block at the bottom of init.sql to update the live DB.
 
-```sql
-CONSTRAINT `Message_ibfk_1` FOREIGN KEY (`ThreadID`) REFERENCES `Thread` (`ThreadID`) ON DELETE CASCADE
-```
+### Trigger 1 — ✅ Added to init.sql — apply migration to live DB
 
-### Trigger 1 — not in the DB yet
+`BEFORE INSERT ON Moderates` — verifies the user already has a row in `Joins` for the same club. Now defined in init.sql — apply to live DB.
 
-`BEFORE INSERT ON Moderates` — verifies the user already has a row in `Joins` for the same club. Must exist in the DB before inserting any moderator rows.
+### Trigger 2 — ✅ Added to init.sql — apply migration to live DB
 
-### Trigger 2 — not in the DB yet (blocks F6)
-
-`AFTER UPDATE ON Invitation` — auto-inserts into `Joins` when `Status` changes to `'Accepted'`. F6 (Invitations accept flow) depends on this trigger being present.
+`AFTER UPDATE ON Invitation` — auto-inserts into `Joins` when `Status` changes to `'Accepted'`. Now defined in init.sql — apply to live DB.
 
 ### Trigger 3 — TBD
 
@@ -52,15 +48,15 @@ Which files to edit for each feature. All backend files live in `backend/routes/
 | Feature | ID | Owner | Backend file | Frontend view | Frontend API file | Status |
 |---|---|---|---|---|---|---|
 | Auth (login/logout) | — | TBD | `routes/auth.js` | `LoginView.vue` | `api/auth.js` | ✅ Done |
-| Search Books / Archives | F1 | TBD | `routes/search.js` | `SearchView.vue` | `api/search.js` | Stub |
-| COMPOSE (Create Discussion Post or Review) | F2 | An | `routes/compose.js` | `ComposeView.vue` | `api/compose.js` | Stub |
-| Feed | F3 | TBD | `routes/feed.js` | `FeedView.vue` | `api/feed.js` | Stub |
-| Thread Detail / Delete | F4 | An | `routes/thread.js` | `ThreadView.vue` | `api/thread.js` | Stub — blocked by CASCADE fix |
-| My Books | F5 | TBD | `routes/books.js` | `MyBooksView.vue` | `api/books.js` | Stub — uses `Rates.Rating` |
-| Invitations | F6 | TBD | `routes/invitations.js` | `InvitationsView.vue` | `api/invitations.js` | Stub — needs Triggers 2 & 3 |
-| Communities | F7 | TBD | `routes/communities.js` | `CommunitiesView.vue` | `api/communities.js` | Stub |
-| Discover | F8 | TBD | `routes/discover.js` | `DiscoverView.vue` | `api/discover.js` | Stub — division query + GROUP BY |
-| Profile | F9 | TBD | `routes/profile.js` | `ProfileView.vue` | `api/profile.js` | Stub |
+| Search Books / Archives | F1 | TBD | `routes/search.js` | `SearchView.vue` | `api/search.js` | ✅ Done — GET /books and /threads with LIKE queries |
+| COMPOSE (Create Discussion Post or Review) | F2 | An | `routes/compose.js` | `ComposeView.vue` | `api/compose.js` | ✅ Done — full backend with requireAuth and transactions |
+| Feed | F3 | TBD | `routes/feed.js` | `FeedView.vue` | `api/feed.js` | ✅ Done — threads from user's clubs |
+| Thread Detail / Delete | F4 | An | `routes/thread.js` | `ThreadView.vue` | `api/thread.js` | ✅ Done — GET, messages, reply, delete with requireAuth |
+| My Books | F5 | TBD | `routes/books.js` | `MyBooksView.vue` | `api/books.js` | ✅ Done — uses `Rates.Rating` |
+| Invitations | F6 | TBD | `routes/invitations.js` | `InvitationsView.vue` | `api/invitations.js` | ✅ Done — auto-join via Trigger 2 |
+| Communities | F7 | TBD | `routes/communities.js` | `CommunitiesView.vue` | `api/communities.js` | ✅ Done — includes join + create club |
+| Discover | F8 | TBD | `routes/discover.js` | `DiscoverView.vue` | `api/discover.js` | ✅ Done — division query + aggregation query |
+| Profile | F9 | TBD | `routes/profile.js` | `ProfileView.vue` | `api/profile.js` | ✅ Done — stats, books, reviews, clubs sub-routes |
 
 ---
 
@@ -283,30 +279,42 @@ Every `Club` row **must** have a matching row in either `PrivateClub` or `Public
 
 ### Backend routes
 
-`auth.js` is fully implemented. Every other route is a stub — it exists and returns HTTP 200 with `{ data: [], error: null }` but does not query the database.
+All features (F1–F9) are fully implemented.
 
 | Method | Path | Auth required | Status |
 |---|---|---|---|
 | POST | `/api/auth/login` | No | ✅ Done |
 | POST | `/api/auth/logout` | No | ✅ Done |
 | GET | `/api/auth/me` | Yes | ✅ Done |
-| GET | `/api/search` | No | Stub |
-| POST | `/api/compose/thread` | No | Stub |
-| POST | `/api/compose/review` | No | Stub |
-| GET | `/api/feed` | No | Stub |
-| GET | `/api/thread/:id` | No | Stub |
-| POST | `/api/thread/:id/reply` | No | Stub |
-| DELETE | `/api/thread/:id` | No | Stub |
-| GET | `/api/books/my` | No | Stub |
-| GET | `/api/invitations` | No | Stub |
-| PUT | `/api/invitations/:id` | No | Stub |
-| GET | `/api/communities/my` | No | Stub |
-| GET | `/api/discover/clubs` | No | Stub |
-| GET | `/api/discover/top-books` | No | Stub |
-| GET | `/api/profile` | No | Stub |
+| GET | `/api/search/books` | No | ✅ Done |
+| GET | `/api/search/threads` | No | ✅ Done |
+| GET | `/api/compose/clubs` | Yes | ✅ Done |
+| GET | `/api/compose/books` | No | ✅ Done |
+| POST | `/api/compose/thread` | Yes | ✅ Done |
+| POST | `/api/compose/review` | Yes | ✅ Done |
+| GET | `/api/feed` | Yes | ✅ Done |
+| GET | `/api/thread/:id` | Yes | ✅ Done |
+| GET | `/api/thread/:id/messages` | Yes | ✅ Done |
+| POST | `/api/thread/:id/reply` | Yes | ✅ Done |
+| DELETE | `/api/thread/:id` | Yes | ✅ Done |
+| GET | `/api/books/my` | Yes | ✅ Done |
+| POST | `/api/books/my` | Yes | ✅ Done |
+| PATCH | `/api/books/my/:isbn/status` | Yes | ✅ Done |
+| PATCH | `/api/books/my/:isbn/rating` | Yes | ✅ Done |
+| GET | `/api/invitations` | Yes | ✅ Done |
+| PUT | `/api/invitations/:id` | Yes | ✅ Done |
+| GET | `/api/communities/my` | Yes | ✅ Done |
+| GET | `/api/communities/public` | Yes | ✅ Done |
+| POST | `/api/communities/join` | Yes | ✅ Done |
+| POST | `/api/communities` | Yes | ✅ Done |
+| GET | `/api/discover/clubs` | No | ✅ Done |
+| GET | `/api/discover/top-books` | No | ✅ Done |
+| GET | `/api/profile` | Yes | ✅ Done |
+| GET | `/api/profile/stats` | Yes | ✅ Done |
+| GET | `/api/profile/books` | Yes | ✅ Done |
+| GET | `/api/profile/reviews` | Yes | ✅ Done |
+| GET | `/api/profile/clubs` | Yes | ✅ Done |
 | GET | `/api/health` | No | Returns `{ status: 'ok', timestamp }` |
-
-When implementing a stub: add `requireAuth` if the route needs login, then replace `res.json({ data: [], error: null })` with real DB logic.
 
 ### Frontend API functions
 
@@ -360,10 +368,6 @@ If the session has expired or the user is not logged in, `requireAuth` automatic
 
 > DB blockers (CASCADE fix, Triggers 1–3) are covered in [⚠️ Read this before you start](#️-read-this-before-you-start) at the top.
 
-### All stub routes are missing login protection
-
-When you implement a stub route, decide whether it should require login and add `requireAuth` if so.
-
 ### No password hashing
 
 Passwords are stored and compared as plain text. The seed accounts use `hash1`–`hash5` as their literal passwords.
@@ -376,6 +380,6 @@ Both files exist but are not imported anywhere. `AppLayout.vue` handles all navi
 
 `BookCard` renders only the book title. `ThreadCard` renders only the thread topic. Both need real markup before being used in feature views.
 
-### All views except LoginView are stubs
+### All views are implemented
 
-Every view other than `LoginView.vue` shows a heading and "Coming soon." — no data fetching, no real UI.
+All views have real UI with data fetching. The only views still waiting on a backend are F1 (Search), F2 (Compose), F3 (Feed), F4 (Thread), and F8 (Discover) — they render but show empty data until their backend routes are implemented.

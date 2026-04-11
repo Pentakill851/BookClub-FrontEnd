@@ -176,11 +176,12 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getThread, getMessages, postMessage, deleteThread } from '../api/thread.js'
+import { getMe } from '../api/auth.js'
 
 const route = useRoute()
 const router = useRouter()
 
-const currentUserID = 1 // placeholder until real auth gets wired up
+const currentUserID = ref(null)
 const loading = ref(true)
 const thread = ref(null)
 const messages = ref([])
@@ -191,7 +192,8 @@ const deleting = ref(false)
 
 onMounted(async () => {
   const id = Number(route.params.id)
-  const [t, m] = await Promise.all([getThread(id), getMessages(id)])
+  const [me, t, m] = await Promise.all([getMe(), getThread(id), getMessages(id)])
+  currentUserID.value = me.data?.userID ?? null
   thread.value = t
   messages.value = m
   loading.value = false

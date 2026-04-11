@@ -215,10 +215,11 @@
 import { ref, onMounted } from 'vue'
 import { getFeed, getInvitations, getMyClubs, getRecommendedClubs, acceptInvitation, declineInvitation } from '../api/feed.js'
 import { getMyBooks } from '../api/books.js'
+import { getMe } from '../api/auth.js'
 
 const loading = ref(true)
 
-const user = ref({ UserID: 1, username: 'Alice', email: 'alice@sfu.ca' })
+const user = ref({ username: '', email: '' })
 const invitations = ref([])
 const myClubs = ref([])
 const threads = ref([])
@@ -235,13 +236,15 @@ async function handleInvite(inviteID, action) {
 }
 
 onMounted(async () => {
-  const [feed, invites, clubs, recommended, books] = await Promise.all([
+  const [me, feed, invites, clubs, recommended, books] = await Promise.all([
+    getMe(),
     getFeed(),
     getInvitations(),
     getMyClubs(),
     getRecommendedClubs(),
     getMyBooks(),
   ])
+  if (me.data) user.value = me.data
   threads.value = feed
   invitations.value = invites
   myClubs.value = clubs

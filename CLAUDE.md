@@ -54,21 +54,21 @@ Never commit `.env`. The `.env.example` file committed to the repo must match th
 
 Track which features are implemented. Update this whenever a feature ships.
 
-| ID  | Feature                          | Backend | Frontend | Notes                                    |
-|-----|----------------------------------|---------|----------|------------------------------------------|
-| —   | Auth (Login/out)                 | ✅      | ✅       |                                          |
-| F1  | Search Books / Archives          | ❌      | ❌       |                                          |
-| F2  | Create Discussion Post or Review | ❌      | ❌       |                                          |
-| F3  | Feed                             | ❌      | ❌       |                                          |
-| F4  | Thread Detail                    | ❌      | ❌       | Blocked until CASCADE fix in init.sql    |
-| F5  | My Books                         | ✅      | ✅       | Uses `Rates.Rating`, not `BookReview`    |
-| F6  | Invitations                      | ✅      | ✅       | Join on accept in `routes/invitations.js`; Trigger 2 not in `init.sql` yet |
-| F7  | Communities                      | ✅      | ✅       |                                          |
-| F8  | Discover                         | ❌      | ❌       | Division query + GROUP BY aggregation    |
-| F9  | Profile                          | ✅      | ✅       |                                          |
-| —   | Trigger 1                        | ❌      | —        | Moderator must be a member               |
-| —   | Trigger 2                        | ❌      | —        | Auto-join on invitation accept           |
-| —   | Trigger 3                        | ❌      | —        | TBD — document here when decided         |
+| ID  | Feature                          | Backend | Frontend | Notes                                                        |
+|-----|----------------------------------|---------|----------|--------------------------------------------------------------|
+| —   | Auth (Login/out)                 | ✅      | ✅       |                                                              |
+| F1  | Search Books / Archives          | ✅      | ✅       | Two routes: /books and /threads with LIKE queries            |
+| F2  | Create Discussion Post or Review | ✅      | ✅       | Full backend implemented: GET /clubs, GET /books, POST /thread, POST /review with requireAuth and transactions |
+| F3  | Feed                             | ✅      | ✅       | Shows threads from user's clubs, ordered by CreatedAt DESC   |
+| F4  | Thread Detail                    | ✅      | ✅       | Includes GET /:id, GET /:id/messages, POST /:id/reply, DELETE /:id — requires CASCADE migration applied to live DB for DELETE |
+| F5  | My Books                         | ✅      | ✅       | Uses `Rates.Rating`, not `BookReview`                        |
+| F6  | Invitations                      | ✅      | ✅       | Auto-join handled by Trigger 2 in DB                         |
+| F7  | Communities                      | ✅      | ✅       | Includes join + create club flows                            |
+| F8  | Discover                         | ✅      | ✅       | Fully implemented: GET /clubs (division query), GET /top-books (aggregation query) |
+| F9  | Profile                          | ✅      | ✅       | Includes stats, books, reviews, clubs sub-routes             |
+| —   | Trigger 1                        | ✅      | —        | BEFORE INSERT ON Moderates — in init.sql, apply migration to live DB |
+| —   | Trigger 2                        | ✅      | —        | AFTER UPDATE ON Invitation — in init.sql; invitations.js in-code workaround is now redundant but harmless |
+| —   | Trigger 3                        | ❌      | —        | TBD — document here when decided                             |
 
 ---
 
@@ -104,15 +104,15 @@ backend/
     requireAuth.js        — session auth guard
   routes/
     auth.js               — POST /api/auth/login, POST /api/auth/logout, GET /api/auth/me
-    search.js             — GET /api/search
-    compose.js            — POST /api/compose/thread, POST /api/compose/review
+    search.js             — GET /api/search/books, GET /api/search/threads
+    compose.js            — GET /api/compose/clubs, GET /api/compose/books, POST /api/compose/thread, POST /api/compose/review
     feed.js               — GET /api/feed
-    thread.js             — GET /api/thread/:id, POST /api/thread/:id/reply, DELETE /api/thread/:id
-    books.js              — GET /api/books/my
+    thread.js             — GET /api/thread/:id, GET /api/thread/:id/messages, POST /api/thread/:id/reply, DELETE /api/thread/:id
+    books.js              — GET /api/books/my, POST /api/books/my, PATCH /api/books/my/:isbn/status, PATCH /api/books/my/:isbn/rating
     invitations.js        — GET /api/invitations, PUT /api/invitations/:id
-    communities.js        — GET /api/communities/my
+    communities.js        — GET /api/communities/my, GET /api/communities/public, POST /api/communities/join, POST /api/communities
     discover.js           — GET /api/discover/clubs, GET /api/discover/top-books
-    profile.js            — GET /api/profile
+    profile.js            — GET /api/profile, GET /api/profile/stats, GET /api/profile/books, GET /api/profile/reviews, GET /api/profile/clubs
   schema/
     init.sql              — full schema migration (source of truth)
     seed.sql              — bulk book seed data (20+ books)

@@ -83,6 +83,11 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
+
+          <p v-if="booksError" class="text-sm text-red-600 flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            {{ booksError }}
+          </p>
         </div>
 
         <!-- which club this post is going into -->
@@ -108,6 +113,11 @@
               </div>
             </label>
           </div>
+
+          <p v-if="clubsError" class="text-sm text-red-600 flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            {{ clubsError }}
+          </p>
         </div>
 
         <!-- the post title basically -->
@@ -200,10 +210,10 @@
 
             <div class="flex gap-4">
               <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-stone-700 to-stone-900 flex items-center justify-center font-bold text-stone-50 shrink-0 text-sm shadow-inner">
-                A
+                {{ currentUser?.username?.[0]?.toUpperCase() || '?' }}
               </div>
               <div class="flex-1">
-                <div class="font-bold text-stone-900 mb-1">Alice</div>
+                <div class="font-bold text-stone-900 mb-1">{{ currentUser?.username || 'Loading...' }}</div>
                 <h3 class="font-bold text-stone-900 text-lg leading-tight mb-2">
                   {{ topic || 'Your topic will appear here...' }}
                 </h3>
@@ -245,7 +255,8 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { getClubsForCompose, searchBooksForCite, createThread } from '../api/compose.js'
+import { getClubsForCompose, searchBooksForCite, createThread, createReview } from '../api/compose.js'
+import { getMe } from '../api/auth.js'
 
 const router = useRouter()
 
@@ -262,6 +273,9 @@ const starRating = ref(0)
 const submitting = ref(false)
 const formError = ref('')
 const showSuccess = ref(false)
+const currentUser = ref(null)
+const clubsError = ref('')
+const booksError = ref('')
 
 const selectedClubName = computed(() => {
   const club = clubs.value.find(c => c.ClubID === selectedClubID.value)
@@ -277,8 +291,14 @@ let searchTimer = null
 function onBookSearch() {
   clearTimeout(searchTimer)
   searchTimer = setTimeout(async () => {
-    bookOptions.value = await searchBooksForCite(bookSearch.value)
-    showBookDropdown.value = true
+    try {
+      booksError.value = ''
+      bookOptions.value = await searchBooksForCite(bookSearch.value)
+      showBookDropdown.value = true
+    } catch (err) {
+      booksError.value = err.message
+      bookOptions.value = []
+    }
   }, 200)
 }
 
@@ -307,21 +327,52 @@ async function submit() {
   if (formError.value) return
 
   submitting.value = true
-  await createThread({
-    clubID: selectedClubID.value,
-    isbn: selectedBook.value?.ISBN || null,
-    topic: topic.value.trim(),
-    content: content.value.trim(),
-    isReview: mode.value === 'review',
-    starRating: starRating.value,
-  })
-  submitting.value = false
-  showSuccess.value = true
-  setTimeout(() => router.push({ name: 'feed' }), 1800)
+
+  try {
+    let result
+    if (mode.value === 'review') {
+      result = await createReview({
+        clubID: selectedClubID.value,
+        isbn: selectedBook.value.ISBN,
+        topic: topic.value.trim(),
+        content: content.value.trim(),
+        starRating: starRating.value,
+      })
+    } else {
+      result = await createThread({
+        clubID: selectedClubID.value,
+        isbn: selectedBook.value?.ISBN || null,
+        topic: topic.value.trim(),
+        content: content.value.trim(),
+      })
+    }
+
+    submitting.value = false
+    showSuccess.value = true
+    setTimeout(() => router.push(`/thread/${result.threadID}`), 1800)
+  } catch (err) {
+    submitting.value = false
+    formError.value = err.message
+  }
 }
 
 onMounted(async () => {
-  clubs.value = await getClubsForCompose()
+  try {
+    const meResult = await getMe()
+    if (meResult.data) {
+      currentUser.value = meResult.data
+    }
+  } catch (err) {
+    console.error('Failed to load user:', err)
+  }
+
+  try {
+    clubsError.value = ''
+    clubs.value = await getClubsForCompose()
+  } catch (err) {
+    clubsError.value = err.message
+  }
+
   document.addEventListener('click', closeDropdown)
 })
 onBeforeUnmount(() => document.removeEventListener('click', closeDropdown))

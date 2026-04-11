@@ -8,20 +8,35 @@ import CommunitiesView from '../views/CommunitiesView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import InvitationsView from '../views/InvitationsView.vue'
 import DiscoverView from '../views/DiscoverView.vue'
+import LoginView from '../views/LoginView.vue'
 
 const routes = [
-  { path: '/', name: 'feed', component: FeedView },
-  { path: '/search', name: 'search', component: SearchView },
-  { path: '/thread/:id', name: 'thread', component: ThreadView },
-  { path: '/my-books', name: 'my-books', component: MyBooksView },
-  { path: '/compose', name: 'compose', component: ComposeView },
-  { path: '/communities', name: 'communities', component: CommunitiesView },
-  { path: '/profile', name: 'profile', component: ProfileView },
-  { path: '/invitations', name: 'invitations', component: InvitationsView },
-  { path: '/discover', name: 'discover', component: DiscoverView },
+  { path: '/login', name: 'login', component: LoginView },
+  { path: '/', name: 'feed', component: FeedView, meta: { requiresAuth: true } },
+  { path: '/search', name: 'search', component: SearchView, meta: { requiresAuth: true } },
+  { path: '/thread/:id', name: 'thread', component: ThreadView, meta: { requiresAuth: true } },
+  { path: '/my-books', name: 'my-books', component: MyBooksView, meta: { requiresAuth: true } },
+  { path: '/compose', name: 'compose', component: ComposeView, meta: { requiresAuth: true } },
+  { path: '/communities', name: 'communities', component: CommunitiesView, meta: { requiresAuth: true } },
+  { path: '/profile', name: 'profile', component: ProfileView, meta: { requiresAuth: true } },
+  { path: '/invitations', name: 'invitations', component: InvitationsView, meta: { requiresAuth: true } },
+  { path: '/discover', name: 'discover', component: DiscoverView, meta: { requiresAuth: true } },
 ]
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(),
   routes,
 })
+
+router.beforeEach(async (to) => {
+  if (!to.meta.requiresAuth) return true
+  try {
+    const res = await fetch('/api/auth/me', { credentials: 'include' })
+    if (res.ok) return true
+  } catch {
+    // network error — fall through to redirect
+  }
+  return { name: 'login' }
+})
+
+export default router

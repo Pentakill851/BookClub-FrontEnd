@@ -4,6 +4,16 @@ import { requireAuth } from '../middleware/requireAuth.js'
 
 const router = express.Router()
 
+const currentBookSubquery = `(SELECT b.Title FROM \`Reads\` r
+               INNER JOIN Book b ON b.ISBN = r.ISBN
+               WHERE r.ClubID = c.ClubID
+               ORDER BY CASE r.ReadingStatus
+                 WHEN 'In Progress' THEN 1
+                 WHEN 'Not Started' THEN 2
+                 ELSE 3 END,
+                 r.DateFinished IS NULL, r.DateFinished DESC
+               LIMIT 1) AS currentBook`
+
 router.get('/my', requireAuth, async (req, res) => {
   try {
     const userId = req.session.userID
@@ -12,15 +22,7 @@ router.get('/my', requireAuth, async (req, res) => {
               CASE WHEN pc.ClubID IS NOT NULL THEN 'Private' ELSE 'Public' END AS type,
               CASE WHEN m.UserID IS NOT NULL THEN 1 ELSE 0 END AS isModerator,
               (SELECT COUNT(*) FROM Joins j2 WHERE j2.ClubID = c.ClubID) AS memberCount,
-              (SELECT b.Title FROM Reads r
-               INNER JOIN Book b ON b.ISBN = r.ISBN
-               WHERE r.ClubID = c.ClubID
-               ORDER BY CASE r.ReadingStatus
-                 WHEN 'In Progress' THEN 1
-                 WHEN 'Not Started' THEN 2
-                 ELSE 3 END,
-                 r.DateFinished IS NULL, r.DateFinished DESC
-               LIMIT 1) AS currentBook
+              ${currentBookSubquery}
        FROM Joins j
        INNER JOIN Club c ON c.ClubID = j.ClubID
        LEFT JOIN PrivateClub pc ON pc.ClubID = c.ClubID
@@ -48,15 +50,7 @@ router.get('/public', requireAuth, async (req, res) => {
       `SELECT c.ClubID AS ClubID, c.Name AS Name, c.Description AS Description,
               'Public' AS type,
               (SELECT COUNT(*) FROM Joins j2 WHERE j2.ClubID = c.ClubID) AS memberCount,
-              (SELECT b.Title FROM Reads r
-               INNER JOIN Book b ON b.ISBN = r.ISBN
-               WHERE r.ClubID = c.ClubID
-               ORDER BY CASE r.ReadingStatus
-                 WHEN 'In Progress' THEN 1
-                 WHEN 'Not Started' THEN 2
-                 ELSE 3 END,
-                 r.DateFinished IS NULL, r.DateFinished DESC
-               LIMIT 1) AS currentBook
+              ${currentBookSubquery}
        FROM Club c
        INNER JOIN PublicClub pub ON pub.ClubID = c.ClubID
        ORDER BY c.Name ASC`

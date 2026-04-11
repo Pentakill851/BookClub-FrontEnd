@@ -140,11 +140,11 @@
 
     <!-- popup form when they want to start a new club -->
     <Transition enter-from-class="opacity-0" enter-active-class="transition duration-200" leave-to-class="opacity-0" leave-active-class="transition duration-200">
-      <div v-if="showCreateModal" class="fixed inset-0 bg-stone-900/50 z-50 flex items-center justify-center p-4" @click.self="showCreateModal = false">
+      <div v-if="showCreateModal" class="fixed inset-0 bg-stone-900/50 z-50 flex items-center justify-center p-4" @click.self="showCreateModal = false; createError = null">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-5">
           <div class="flex items-center justify-between">
             <h2 class="text-lg font-bold text-stone-900">Create a New Club</h2>
-            <button @click="showCreateModal = false" class="text-stone-400 hover:text-stone-600">
+            <button @click="showCreateModal = false; createError = null" class="text-stone-400 hover:text-stone-600">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
@@ -183,6 +183,8 @@
             </div>
           </div>
 
+          <p v-if="createError" class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">{{ createError }}</p>
+
           <div class="flex gap-3 pt-2">
             <button @click="showCreateModal = false" class="flex-1 border border-stone-200 text-stone-600 py-2.5 rounded-xl text-sm font-medium hover:bg-stone-50 transition">Cancel</button>
             <button @click="handleCreateClub" :disabled="creating" class="flex-1 bg-amber-700 hover:bg-amber-800 disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-medium shadow-sm transition">{{ creating ? 'Creating...' : 'Create Club' }}</button>
@@ -213,6 +215,7 @@ const joinedIDs = ref(new Set())
 const showCreateModal = ref(false)
 const newClub = ref({ name: '', description: '', type: 'Public', passcode: '' })
 const creating = ref(false)
+const createError = ref(null)
 
 const filteredPublicClubs = computed(() => {
   const q = discoverSearch.value.toLowerCase()
@@ -230,11 +233,14 @@ function clubColor(id) {
 async function handleCreateClub() {
   if (!newClub.value.name.trim()) return
   creating.value = true
+  createError.value = null
   try {
     const club = await createClub(newClub.value)
     myClubs.value.push(club)
     showCreateModal.value = false
     newClub.value = { name: '', description: '', type: 'Public', passcode: '' }
+  } catch (err) {
+    createError.value = err.message
   } finally {
     creating.value = false
   }

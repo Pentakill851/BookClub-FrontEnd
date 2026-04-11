@@ -1,42 +1,63 @@
-const DELAY = 400
+export async function getClubsForCompose() {
+  const res = await fetch('/api/compose/clubs', {
+    credentials: 'include'
+  })
+  const json = await res.json()
 
-export function getClubsForCompose() {
-  return new Promise(resolve =>
-    setTimeout(() => resolve([
-      { ClubID: 1, Name: 'Sci-Fi Explorers', type: 'Private' },
-      { ClubID: 6, Name: 'Tolkien Fanatics', type: 'Public' },
-      { ClubID: 2, Name: 'Classic Lit', type: 'Public' },
-    ]), DELAY)
-  )
+  if (!res.ok || json.error) {
+    throw new Error(json.error || 'Failed to fetch clubs')
+  }
+
+  return json.data
 }
 
-export function searchBooksForCite(query) {
-  const ALL = [
-    { ISBN: '9780140449136', Title: 'War and Peace', Author: 'Leo Tolstoy' },
-    { ISBN: '9780451524935', Title: '1984', Author: 'George Orwell' },
-    { ISBN: '9780743273565', Title: 'The Great Gatsby', Author: 'F. Scott Fitzgerald' },
-    { ISBN: '9780061120084', Title: 'To Kill a Mockingbird', Author: 'Harper Lee' },
-    { ISBN: '9780345339683', Title: 'The Hobbit', Author: 'J.R.R. Tolkien' },
-  ]
-  return new Promise(resolve =>
-    setTimeout(() => {
-      const q = query.toLowerCase()
-      resolve(q ? ALL.filter(b => b.Title.toLowerCase().includes(q) || b.Author.toLowerCase().includes(q)) : ALL)
-    }, 200)
-  )
+export async function searchBooksForCite(query) {
+  const url = `/api/compose/books?q=${encodeURIComponent(query)}`
+  const res = await fetch(url, {
+    credentials: 'include'
+  })
+  const json = await res.json()
+
+  if (!res.ok || json.error) {
+    throw new Error(json.error || 'Failed to search books')
+  }
+
+  return json.data
 }
 
-export function createThread({ clubID, isbn, topic, content, isReview, starRating }) {
-  return new Promise(resolve =>
-    setTimeout(() => resolve({
-      ThreadID: Math.floor(Math.random() * 1000) + 100,
-      ClubID: clubID,
-      ISBN: isbn,
-      Topic: topic,
-      Content: content,
-      isReview,
-      starRating: isReview ? starRating : null,
-      CreatedAt: new Date().toISOString(),
-    }), DELAY)
-  )
+export async function createThread({ clubID, isbn, topic, content }) {
+  const body = { clubID, topic, content }
+  if (isbn) {
+    body.isbn = isbn
+  }
+
+  const res = await fetch('/api/compose/thread', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(body)
+  })
+  const json = await res.json()
+
+  if (!res.ok || json.error) {
+    throw new Error(json.error || 'Failed to create thread')
+  }
+
+  return json.data
+}
+
+export async function createReview({ clubID, isbn, topic, content, starRating }) {
+  const res = await fetch('/api/compose/review', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ clubID, isbn, topic, content, starRating })
+  })
+  const json = await res.json()
+
+  if (!res.ok || json.error) {
+    throw new Error(json.error || 'Failed to create review')
+  }
+
+  return json.data
 }
