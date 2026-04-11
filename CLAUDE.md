@@ -61,11 +61,11 @@ Track which features are implemented. Update this whenever a feature ships.
 | F2  | Create Discussion Post or Review | ❌      | ❌       |                                          |
 | F3  | Feed                             | ❌      | ❌       |                                          |
 | F4  | Thread Detail                    | ❌      | ❌       | Blocked until CASCADE fix in init.sql    |
-| F5  | My Books                         | ❌      | ❌       | Uses `Rates.Rating`, not `BookReview`    |
-| F6  | Invitations                      | ❌      | ❌       | Requires Triggers 2 & 3                  |
-| F7  | Communities                      | ❌      | ❌       |                                          |
+| F5  | My Books                         | ✅      | ✅       | Uses `Rates.Rating`, not `BookReview`    |
+| F6  | Invitations                      | ✅      | ✅       | Join on accept in `routes/invitations.js`; Trigger 2 not in `init.sql` yet |
+| F7  | Communities                      | ✅      | ✅       |                                          |
 | F8  | Discover                         | ❌      | ❌       | Division query + GROUP BY aggregation    |
-| F9  | Profile                          | ❌      | ❌       |                                          |
+| F9  | Profile                          | ✅      | ✅       |                                          |
 | —   | Trigger 1                        | ❌      | —        | Moderator must be a member               |
 | —   | Trigger 2                        | ❌      | —        | Auto-join on invitation accept           |
 | —   | Trigger 3                        | ❌      | —        | TBD — document here when decided         |
