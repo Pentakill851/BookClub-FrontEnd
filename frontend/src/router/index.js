@@ -9,6 +9,7 @@ import ProfileView from '../views/ProfileView.vue'
 import InvitationsView from '../views/InvitationsView.vue'
 import DiscoverView from '../views/DiscoverView.vue'
 import LoginView from '../views/LoginView.vue'
+import ClubView from '../views/ClubView.vue'
 
 const routes = [
   { path: '/login', name: 'login', component: LoginView },
@@ -21,6 +22,7 @@ const routes = [
   { path: '/profile', name: 'profile', component: ProfileView, meta: { requiresAuth: true } },
   { path: '/invitations', name: 'invitations', component: InvitationsView, meta: { requiresAuth: true } },
   { path: '/discover', name: 'discover', component: DiscoverView, meta: { requiresAuth: true } },
+  { path: '/club/:id', name: 'club', component: ClubView, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({

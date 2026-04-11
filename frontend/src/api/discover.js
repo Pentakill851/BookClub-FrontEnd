@@ -1,3 +1,18 @@
+export async function getDiscoverClubs() {
+  try {
+    const res = await fetch('/api/discover/clubs', { credentials: 'include' })
+    const { data, error } = await res.json()
+    if (error) {
+      console.error('Error fetching discover clubs:', error)
+      return []
+    }
+    return data.map(row => ({ ...row, memberCount: Number(row.memberCount) }))
+  } catch (err) {
+    console.error('Error fetching discover clubs:', err)
+    return []
+  }
+}
+
 export async function getDiscoverBooks() {
   try {
     const res = await fetch('/api/discover/top-books', { credentials: 'include' })

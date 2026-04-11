@@ -26,7 +26,9 @@
       <div class="w-10 h-10 border-4 border-amber-100 border-t-amber-700 rounded-full animate-spin"></div>
     </div>
 
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+    <template v-else>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
       <div
         v-for="book in filtered"
         :key="book.ISBN"
@@ -63,15 +65,50 @@
       </div>
     </div>
 
+    <!-- Featured Clubs -->
+    <div v-if="clubs.length > 0" class="mt-12">
+      <div class="flex items-end justify-between mb-6">
+        <div>
+          <h2 class="text-2xl font-bold text-stone-900" style="font-family: Merriweather, serif;">Featured Clubs</h2>
+          <p class="text-sm text-stone-500 mt-1">Clubs where every member has rated at least one book.</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <RouterLink
+          v-for="club in clubs"
+          :key="club.ClubID"
+          :to="'/club/' + club.ClubID"
+          class="bg-white rounded-2xl border border-stone-200/60 shadow-sm hover:shadow-md transition p-5 flex flex-col gap-3 no-underline"
+        >
+          <div class="flex items-start justify-between">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-stone-700 to-stone-900 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
+              {{ club.Name.charAt(0) }}
+            </div>
+            <span class="text-xs text-stone-400 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              {{ club.memberCount }} {{ club.memberCount === 1 ? 'member' : 'members' }}
+            </span>
+          </div>
+          <div class="flex-1">
+            <h3 class="font-bold text-stone-900 leading-snug">{{ club.Name }}</h3>
+            <p v-if="club.Description" class="text-xs text-stone-500 mt-1 line-clamp-2 leading-relaxed">{{ club.Description }}</p>
+          </div>
+        </RouterLink>
+      </div>
+    </div>
+
+    </template>
+
   </main>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getDiscoverBooks } from '../api/discover.js'
+import { getDiscoverBooks, getDiscoverClubs } from '../api/discover.js'
 
 const loading = ref(true)
 const books = ref([])
+const clubs = ref([])
 const activeGenre = ref('All')
 
 const genres = computed(() => [...new Set(books.value.map(b => b.Genre))])
@@ -81,7 +118,9 @@ const filtered = computed(() =>
 )
 
 onMounted(async () => {
-  books.value = await getDiscoverBooks()
+  const [booksData, clubsData] = await Promise.all([getDiscoverBooks(), getDiscoverClubs()])
+  books.value = booksData
+  clubs.value = clubsData
   loading.value = false
 })
 </script>

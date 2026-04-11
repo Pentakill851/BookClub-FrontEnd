@@ -24,7 +24,7 @@
             </div>
             <div class="w-px bg-stone-200"></div>
             <div>
-              <div class="font-bold text-stone-900">4</div>
+              <div class="font-bold text-stone-900">{{ reviewCount }}</div>
               <div class="text-xs text-stone-500">Reviews</div>
             </div>
           </div>
@@ -47,7 +47,7 @@
         <div class="bg-white rounded-2xl shadow-sm border border-stone-200/60 p-5">
           <h3 class="text-sm font-bold text-stone-900 mb-4 uppercase tracking-wider text-xs">My Communities</h3>
           <ul class="space-y-4">
-            <li v-for="club in myClubs" :key="club.ClubID" class="flex items-center justify-between group cursor-pointer">
+            <li v-for="club in myClubs" :key="club.ClubID" @click="router.push('/club/' + club.ClubID)" class="flex items-center justify-between group cursor-pointer">
               <div>
                 <div class="font-medium text-sm text-stone-800 group-hover:text-amber-700 transition">{{ club.Name }}</div>
                 <div class="text-xs text-stone-400 mt-0.5 flex items-center gap-1">
@@ -106,7 +106,7 @@
           >
             <div class="flex justify-between items-start mb-4">
               <div class="flex items-center gap-2 text-xs font-medium text-stone-500">
-                <span class="text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-md border border-amber-100">{{ thread.ClubName }}</span>
+                <span @click.stop="router.push('/club/' + thread.ClubID)" class="text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-md border border-amber-100 cursor-pointer hover:bg-amber-100 transition">{{ thread.ClubName }}</span>
                 <span class="text-stone-300">&bull;</span>
                 <span>Discussing: <em class="text-stone-700 font-medium">"{{ thread.BookTitle }}"</em></span>
               </div>
@@ -213,10 +213,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { getFeed, getInvitations, getMyClubs, getRecommendedClubs, acceptInvitation, declineInvitation } from '../api/feed.js'
 import { getMyBooks } from '../api/books.js'
 import { getMe } from '../api/auth.js'
+import { getProfileStats } from '../api/profile.js'
 
+const router = useRouter()
 const loading = ref(true)
 
 const user = ref({ username: '', email: '' })
@@ -225,6 +228,7 @@ const myClubs = ref([])
 const threads = ref([])
 const recommendedClubs = ref([])
 const myBooks = ref([])
+const reviewCount = ref(0)
 
 async function handleInvite(inviteID, action) {
   if (action === 'accept') {
@@ -236,13 +240,14 @@ async function handleInvite(inviteID, action) {
 }
 
 onMounted(async () => {
-  const [me, feed, invites, clubs, recommended, books] = await Promise.all([
+  const [me, feed, invites, clubs, recommended, books, stats] = await Promise.all([
     getMe(),
     getFeed(),
     getInvitations(),
     getMyClubs(),
     getRecommendedClubs(),
     getMyBooks(),
+    getProfileStats(),
   ])
   if (me.data) user.value = me.data
   threads.value = feed
@@ -250,6 +255,7 @@ onMounted(async () => {
   myClubs.value = clubs
   recommendedClubs.value = recommended
   myBooks.value = books
+  reviewCount.value = stats?.reviewsWritten ?? 0
   loading.value = false
 })
 </script>

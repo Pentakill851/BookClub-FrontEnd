@@ -15,6 +15,7 @@ import invitationsRouter from './routes/invitations.js'
 import communitiesRouter from './routes/communities.js'
 import discoverRouter from './routes/discover.js'
 import profileRouter from './routes/profile.js'
+import clubRouter from './routes/club.js'
 
 const app = express()
 
@@ -38,6 +39,7 @@ app.use('/api/invitations', invitationsRouter)
 app.use('/api/communities', communitiesRouter)
 app.use('/api/discover', discoverRouter)
 app.use('/api/profile', profileRouter)
+app.use('/api/club', clubRouter)
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date() })

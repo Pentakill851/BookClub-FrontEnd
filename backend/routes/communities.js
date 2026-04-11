@@ -216,4 +216,22 @@ router.post('/', requireAuth, async (req, res) => {
   }
 })
 
+router.delete('/:id/leave', requireAuth, async (req, res) => {
+  const clubId = Number.parseInt(req.params.id, 10)
+  if (!Number.isFinite(clubId)) {
+    return res.status(400).json({ data: null, error: 'Invalid club ID' })
+  }
+  const userId = req.session.userID
+  try {
+    await pool.execute('DELETE FROM Moderates WHERE UserID = ? AND ClubID = ?', [userId, clubId])
+    const [result] = await pool.execute('DELETE FROM Joins WHERE UserID = ? AND ClubID = ?', [userId, clubId])
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ data: null, error: 'Not a member of this club' })
+    }
+    res.json({ data: { success: true }, error: null })
+  } catch (err) {
+    res.status(500).json({ data: null, error: err.message })
+  }
+})
+
 export default router

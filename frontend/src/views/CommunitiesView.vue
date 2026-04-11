@@ -43,10 +43,11 @@
         <button @click="activeTab = 'discover'" class="mt-2 text-amber-700 hover:underline text-sm">Browse public clubs →</button>
       </div>
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        <div
+        <RouterLink
           v-for="club in myClubs"
           :key="club.ClubID"
-          class="bg-white rounded-2xl border border-stone-200/60 shadow-sm hover:shadow-md transition p-5 flex flex-col gap-4"
+          :to="'/club/' + club.ClubID"
+          class="bg-white rounded-2xl border border-stone-200/60 shadow-sm hover:shadow-md transition p-5 flex flex-col gap-4 no-underline"
         >
           <!-- little initial block for each club -->
           <div class="flex items-start justify-between">
@@ -84,7 +85,7 @@
               {{ club.currentBook }}
             </span>
           </div>
-        </div>
+        </RouterLink>
       </div>
     </div>
 
@@ -114,7 +115,7 @@
           </div>
 
           <div class="flex-1">
-            <h3 class="font-bold text-stone-900">{{ club.Name }}</h3>
+            <RouterLink :to="'/club/' + club.ClubID" class="font-bold text-stone-900 hover:text-amber-700 transition">{{ club.Name }}</RouterLink>
             <p class="text-xs text-stone-500 mt-1 leading-relaxed line-clamp-2">{{ club.Description }}</p>
           </div>
 
