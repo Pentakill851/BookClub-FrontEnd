@@ -56,8 +56,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import { getInvitations, acceptInvitation, declineInvitation } from '../api/invitations.js'
+
+const refreshInviteCount = inject('refreshInviteCount', () => {})
 
 const loading = ref(true)
 const invitations = ref([])
@@ -76,6 +78,7 @@ async function handleInvite(inviteID, action) {
       await declineInvitation(inviteID)
     }
     invitations.value = invitations.value.filter(i => i.InviteID !== inviteID)
+    refreshInviteCount()
   } finally {
     pendingID.value = null
   }

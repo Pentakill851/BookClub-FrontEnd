@@ -1,11 +1,26 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, provide } from 'vue'
 import { useRouter } from 'vue-router'
 import { logout } from '@/api/auth.js'
+import { getInvitationCount } from '@/api/invitations.js'
 
 const router = useRouter()
 const sidebarOpen = ref(false)
 const searchQuery = ref('')
+const pendingInviteCount = ref(0)
+
+async function refreshInviteCount() {
+  try {
+    const result = await getInvitationCount()
+    pendingInviteCount.value = result.count
+  } catch {
+    pendingInviteCount.value = 0
+  }
+}
+
+provide('refreshInviteCount', refreshInviteCount)
+
+onMounted(refreshInviteCount)
 
 async function handleLogout() {
   await logout()
@@ -106,20 +121,32 @@ const navLinks = [
 
       <!-- Top search bar -->
       <div class="px-6 pt-5 pb-2">
-        <form @submit.prevent="handleSearch" class="flex gap-2 max-w-lg">
-          <input
-            v-model="searchQuery"
-            type="search"
-            placeholder="Search books, clubs, threads…"
-            class="flex-1 border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-          />
-          <button
-            type="submit"
-            class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-          >
-            Search
-          </button>
-        </form>
+        <div class="flex items-center gap-3 max-w-lg">
+          <form @submit.prevent="handleSearch" class="flex gap-2 flex-1">
+            <input
+              v-model="searchQuery"
+              type="search"
+              placeholder="Search books, clubs, threads…"
+              class="flex-1 border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            />
+            <button
+              type="submit"
+              class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              Search
+            </button>
+          </form>
+          <!-- Notification bell -->
+          <router-link to="/invitations" class="relative p-2 rounded-lg text-stone-500 hover:bg-stone-200 hover:text-stone-800 transition-colors" aria-label="Invitations">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span
+              v-if="pendingInviteCount > 0"
+              class="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500"
+            />
+          </router-link>
+        </div>
       </div>
 
       <!-- Page content -->

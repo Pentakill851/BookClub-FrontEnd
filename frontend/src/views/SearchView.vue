@@ -55,6 +55,7 @@
           v-for="book in bookResults"
           :key="book.ISBN"
           class="bg-white rounded-2xl border border-stone-200/60 shadow-sm hover:shadow-md transition p-5 flex flex-col gap-3 cursor-pointer group"
+          @click="openBookPanel(book)"
         >
           <!-- fake cover using genre abbreviation -->
           <div
@@ -74,8 +75,9 @@
               :class="genreBadge(book.Genre)">
               {{ book.Genre }}
             </span>
-            <span class="text-xs text-stone-400">{{ book.PublishedYear }}</span>
+            <span class="text-xs text-stone-400 group-hover:text-amber-600 transition">{{ book.PublishedYear }}</span>
           </div>
+          <div class="text-[10px] text-stone-400 group-hover:text-amber-600 transition text-center">Click for details →</div>
         </div>
       </div>
     </div>
@@ -113,12 +115,136 @@
     </div>
 
   </main>
+
+  <!-- Book detail panel backdrop -->
+  <Transition name="fade">
+    <div
+      v-if="selectedBook"
+      class="fixed inset-0 bg-black/40 z-40"
+      @click="closePanel"
+    ></div>
+  </Transition>
+
+  <!-- Book detail slide-over panel -->
+  <Transition name="slide">
+    <div
+      v-if="selectedBook"
+      class="fixed inset-y-0 right-0 z-50 w-full max-w-md flex flex-col bg-white shadow-2xl overflow-hidden"
+    >
+      <!-- Panel header: colored genre banner -->
+      <div class="relative flex items-end px-6 pb-5 pt-12 text-white" :class="genreColor(selectedBook.Genre)">
+        <button
+          @click="closePanel"
+          class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+        <div>
+          <div class="text-[11px] uppercase tracking-widest font-bold opacity-80 mb-1">{{ selectedBook.Genre }}</div>
+          <h2 class="text-xl font-bold leading-tight" style="font-family: Merriweather, serif;">{{ selectedBook.Title }}</h2>
+          <p class="text-sm opacity-90 mt-1">{{ selectedBook.Author }}</p>
+        </div>
+      </div>
+
+      <!-- Scrollable content -->
+      <div class="flex-1 overflow-y-auto">
+
+        <!-- Book metadata -->
+        <div class="px-6 py-5 border-b border-stone-100">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-stone-50 rounded-xl p-3">
+              <div class="text-[10px] uppercase tracking-wider text-stone-400 font-semibold mb-0.5">Published</div>
+              <div class="text-sm font-semibold text-stone-800">{{ selectedBook.PublishedYear }}</div>
+            </div>
+            <div class="bg-stone-50 rounded-xl p-3">
+              <div class="text-[10px] uppercase tracking-wider text-stone-400 font-semibold mb-0.5">Genre</div>
+              <div class="text-sm font-semibold text-stone-800">{{ selectedBook.Genre }}</div>
+            </div>
+            <div class="bg-stone-50 rounded-xl p-3 col-span-2">
+              <div class="text-[10px] uppercase tracking-wider text-stone-400 font-semibold mb-0.5">ISBN</div>
+              <div class="text-sm font-mono text-stone-600">{{ selectedBook.ISBN }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add to My Books -->
+        <div class="px-6 py-5 border-b border-stone-100">
+          <h3 class="text-sm font-bold text-stone-800 mb-3">Add to My Books</h3>
+
+          <div v-if="addSuccess" class="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mb-3">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+            Added to your books as <strong class="ml-1">{{ addStatus }}</strong>
+          </div>
+          <div v-if="addError" class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-3">{{ addError }}</div>
+
+          <div class="flex gap-2">
+            <select
+              v-model="addStatus"
+              class="flex-1 text-sm border border-stone-200 rounded-xl px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+            >
+              <option>Want to Read</option>
+              <option>Reading</option>
+              <option>Read</option>
+            </select>
+            <button
+              @click="handleAddBook"
+              :disabled="addingBook"
+              class="px-4 py-2.5 bg-amber-700 hover:bg-amber-800 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition flex items-center gap-2"
+            >
+              <span v-if="addingBook" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+              <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+              Add
+            </button>
+          </div>
+        </div>
+
+        <!-- Related threads -->
+        <div class="px-6 py-5">
+          <h3 class="text-sm font-bold text-stone-800 mb-3">Discussions</h3>
+
+          <div v-if="panelThreadsLoading" class="flex justify-center py-8">
+            <div class="w-6 h-6 border-4 border-amber-100 border-t-amber-700 rounded-full animate-spin"></div>
+          </div>
+
+          <div v-else-if="panelThreads.length === 0" class="text-center py-8 text-stone-400">
+            <svg class="w-8 h-8 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+            <p class="text-sm">No discussions yet for this book.</p>
+          </div>
+
+          <div v-else class="space-y-3">
+            <RouterLink
+              v-for="thread in panelThreads"
+              :key="thread.ThreadID"
+              :to="{ name: 'thread', params: { id: thread.ThreadID } }"
+              class="block bg-stone-50 hover:bg-amber-50 border border-stone-200/60 hover:border-amber-200 rounded-xl p-4 transition group"
+              @click="closePanel"
+            >
+              <div class="flex items-center gap-2 text-[11px] text-stone-400 mb-1.5">
+                <span class="text-amber-700 font-semibold">{{ thread.ClubName }}</span>
+                <span class="ml-auto">{{ thread.timeAgo }}</span>
+              </div>
+              <p class="text-sm font-semibold text-stone-800 group-hover:text-amber-700 transition leading-snug">{{ thread.Topic }}</p>
+              <div class="flex items-center gap-3 mt-2 text-[11px] text-stone-400">
+                <span>by {{ thread.AuthorName }}</span>
+                <span class="flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                  {{ thread.replyCount }} replies
+                </span>
+              </div>
+            </RouterLink>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </Transition>
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { searchBooks, searchThreads } from '../api/search.js'
+import { addBook } from '../api/books.js'
 
 const route = useRoute()
 const query = ref(route.query.q || '')
@@ -126,6 +252,15 @@ const activeTab = ref('books')
 const loading = ref(false)
 const bookResults = ref([])
 const threadResults = ref([])
+
+// Book detail panel state
+const selectedBook = ref(null)
+const panelThreads = ref([])
+const panelThreadsLoading = ref(false)
+const addStatus = ref('Want to Read')
+const addingBook = ref(false)
+const addSuccess = ref(false)
+const addError = ref(null)
 
 const tabs = [
   { key: 'books', label: 'Books' },
@@ -147,6 +282,37 @@ async function runSearch() {
   bookResults.value = books
   threadResults.value = threads
   loading.value = false
+}
+
+async function openBookPanel(book) {
+  selectedBook.value = book
+  panelThreads.value = []
+  addSuccess.value = false
+  addError.value = null
+  addStatus.value = 'Want to Read'
+
+  panelThreadsLoading.value = true
+  panelThreads.value = await searchThreads(book.Title)
+  panelThreadsLoading.value = false
+}
+
+function closePanel() {
+  selectedBook.value = null
+}
+
+async function handleAddBook() {
+  if (!selectedBook.value) return
+  addingBook.value = true
+  addSuccess.value = false
+  addError.value = null
+  try {
+    await addBook(selectedBook.value.ISBN, addStatus.value)
+    addSuccess.value = true
+  } catch (err) {
+    addError.value = err.message
+  } finally {
+    addingBook.value = false
+  }
 }
 
 function genreColor(genre) {
@@ -180,3 +346,11 @@ watch(() => route.query.q, val => {
 
 onMounted(runSearch)
 </script>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.slide-enter-active, .slide-leave-active { transition: transform 0.25s ease; }
+.slide-enter-from, .slide-leave-to { transform: translateX(100%); }
+</style>

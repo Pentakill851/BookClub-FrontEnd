@@ -28,7 +28,7 @@
         <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-6">
           <div class="flex justify-between items-start mb-5">
             <div class="flex items-center gap-2 text-xs font-medium text-stone-500">
-              <span class="text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-md border border-amber-100">{{ thread.ClubName }}</span>
+              <RouterLink :to="{ name: 'club', params: { id: thread.ClubID } }" class="text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-md border border-amber-100 hover:bg-amber-100 transition">{{ thread.ClubName }}</RouterLink>
               <span class="text-stone-300">&bull;</span>
               <span>Discussing: <em class="text-stone-700 font-medium">"{{ thread.BookTitle }}"</em></span>
             </div>
@@ -149,7 +149,7 @@
 
         <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-5">
           <h3 class="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3">Club</h3>
-          <div class="font-semibold text-stone-900 text-sm">{{ thread.ClubName }}</div>
+          <RouterLink :to="{ name: 'club', params: { id: thread.ClubID } }" class="font-semibold text-amber-700 hover:underline text-sm">{{ thread.ClubName }}</RouterLink>
           <p class="text-xs text-stone-400 mt-0.5">This thread was posted in this club's reading room.</p>
         </div>
 
@@ -157,8 +157,9 @@
         <div v-if="showDeleteConfirm" class="bg-red-50 border border-red-200 rounded-2xl p-5">
           <h3 class="font-bold text-red-800 text-sm mb-2">Delete this thread?</h3>
           <p class="text-xs text-red-600 mb-4">This will remove the thread and all its messages permanently.</p>
+          <p v-if="deleteError" class="text-xs text-red-700 font-semibold mb-3 bg-red-100 rounded-lg px-3 py-2">{{ deleteError }}</p>
           <div class="flex gap-2">
-            <button @click="executeDelete" :disabled="deleting" class="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-2 rounded-lg transition">
+            <button @click="executeDelete" :disabled="deleting" class="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-xs font-semibold py-2 rounded-lg transition">
               {{ deleting ? 'Deleting...' : 'Yes, delete' }}
             </button>
             <button @click="showDeleteConfirm = false" class="flex-1 bg-white border border-stone-200 text-stone-600 text-xs font-semibold py-2 rounded-lg hover:bg-stone-50 transition">
@@ -189,6 +190,7 @@ const replyContent = ref('')
 const submitting = ref(false)
 const showDeleteConfirm = ref(false)
 const deleting = ref(false)
+const deleteError = ref(null)
 
 onMounted(async () => {
   const id = Number(route.params.id)
@@ -209,13 +211,20 @@ async function submitReply() {
 }
 
 function confirmDelete() {
+  deleteError.value = null
   showDeleteConfirm.value = true
 }
 
 async function executeDelete() {
   deleting.value = true
-  await deleteThread(thread.value.ThreadID)
-  router.push({ name: 'feed' })
+  deleteError.value = null
+  try {
+    await deleteThread(thread.value.ThreadID)
+    router.push({ name: 'feed' })
+  } catch (err) {
+    deleteError.value = err.message
+    deleting.value = false
+  }
 }
 
 function formatDate(iso) {

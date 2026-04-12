@@ -28,3 +28,14 @@ export async function declineInvitation(inviteID) {
     body: JSON.stringify({ status: 'Declined' })
   })
 }
+
+export async function sendInvitation(identifier, clubId) {
+  return api('/api/invitations', {
+    method: 'POST',
+    body: JSON.stringify({ identifier, clubId })
+  })
+}
+
+export async function getInvitationCount() {
+  return api('/api/invitations/count')
+}

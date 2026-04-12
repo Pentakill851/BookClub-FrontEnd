@@ -26,6 +26,80 @@ router.get('/', requireAuth, async (req, res) => {
   }
 })
 
+router.get('/count', requireAuth, async (req, res) => {
+  try {
+    const [[{ count }]] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM Invitation
+       WHERE ReceiverUserID = ? AND (Status = 'Pending' OR Status IS NULL)`,
+      [req.session.userID]
+    )
+    res.json({ data: { count: Number(count) }, error: null })
+  } catch (err) {
+    res.status(500).json({ data: null, error: err.message })
+  }
+})
+
+router.post('/', requireAuth, async (req, res) => {
+  const { identifier, clubId } = req.body ?? {}
+
+  if (!identifier || typeof identifier !== 'string' || !identifier.trim()) {
+    return res.status(400).json({ data: null, error: 'username or email is required' })
+  }
+  if (!clubId) {
+    return res.status(400).json({ data: null, error: 'clubId is required' })
+  }
+
+  const id = identifier.trim()
+
+  try {
+    // Look up target user by username OR email
+    const [[targetUser]] = await pool.execute(
+      'SELECT UserID, Username FROM User WHERE Username = ? OR Email = ?',
+      [id, id]
+    )
+    if (!targetUser) {
+      return res.status(404).json({ data: null, error: `No user found with username or email "${id}"` })
+    }
+    if (targetUser.UserID === req.session.userID) {
+      return res.status(400).json({ data: null, error: 'You cannot invite yourself' })
+    }
+    const displayName = targetUser.Username
+
+    // Check if already a member
+    const [[alreadyMember]] = await pool.execute(
+      'SELECT 1 FROM Joins WHERE UserID = ? AND ClubID = ?',
+      [targetUser.UserID, clubId]
+    )
+    if (alreadyMember) {
+      return res.status(400).json({ data: null, error: 'That user is already a member of this club' })
+    }
+
+    // Check for existing pending invitation
+    const [[existing]] = await pool.execute(
+      `SELECT 1 FROM Invitation WHERE ReceiverUserID = ? AND ClubID = ?
+       AND (Status = 'Pending' OR Status IS NULL)`,
+      [targetUser.UserID, clubId]
+    )
+    if (existing) {
+      return res.status(400).json({ data: null, error: 'That user already has a pending invitation to this club' })
+    }
+
+    // Generate new InviteID
+    const [[{ maxId }]] = await pool.execute('SELECT MAX(InviteID) AS maxId FROM Invitation')
+    const newId = (maxId ?? 0) + 1
+
+    await pool.execute(
+      `INSERT INTO Invitation (InviteID, ClubID, SenderUserID, ReceiverUserID, Status)
+       VALUES (?, ?, ?, ?, 'Pending')`,
+      [newId, clubId, req.session.userID, targetUser.UserID]
+    )
+
+    res.json({ data: { success: true, inviteId: newId, invitedUsername: displayName }, error: null })
+  } catch (err) {
+    res.status(500).json({ data: null, error: err.message })
+  }
+})
+
 router.put('/:id', requireAuth, async (req, res) => {
   const inviteId = Number.parseInt(req.params.id, 10)
   if (!Number.isFinite(inviteId)) {

@@ -46,6 +46,7 @@ router.get('/my', requireAuth, async (req, res) => {
 
 router.get('/public', requireAuth, async (req, res) => {
   try {
+    const userId = req.session.userID
     const [rows] = await pool.execute(
       `SELECT c.ClubID AS ClubID, c.Name AS Name, c.Description AS Description,
               'Public' AS type,
@@ -53,7 +54,9 @@ router.get('/public', requireAuth, async (req, res) => {
               ${currentBookSubquery}
        FROM Club c
        INNER JOIN PublicClub pub ON pub.ClubID = c.ClubID
-       ORDER BY c.Name ASC`
+       WHERE NOT EXISTS (SELECT 1 FROM Joins j WHERE j.ClubID = c.ClubID AND j.UserID = ?)
+       ORDER BY c.Name ASC`,
+      [userId]
     )
 
     const data = rows.map((row) => ({

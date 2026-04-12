@@ -134,7 +134,10 @@ router.delete('/:id', requireAuth, async (req, res) => {
       return res.status(403).json({ data: null, error: 'Not authorized to delete this thread' })
     }
 
-    // Delete the thread (messages will cascade)
+    // Delete child rows first (guards against live DB missing ON DELETE CASCADE)
+    await pool.execute('DELETE FROM Message WHERE ThreadID = ?', [threadID])
+    await pool.execute('DELETE FROM BookReview WHERE ThreadID = ?', [threadID])
+    // Delete the thread
     await pool.execute('DELETE FROM Thread WHERE ThreadID = ?', [threadID])
 
     res.json({ data: { success: true }, error: null })

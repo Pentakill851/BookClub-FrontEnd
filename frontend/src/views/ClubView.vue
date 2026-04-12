@@ -68,6 +68,15 @@
                 {{ actionLoading ? 'Leaving…' : 'Leave Club' }}
               </button>
             </template>
+            <!-- Invite button — visible to members and moderators -->
+            <button
+              v-if="club.isMember || club.isModerator"
+              @click="openInviteModal"
+              class="flex items-center gap-1.5 border border-stone-200 text-stone-600 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 px-4 py-2 rounded-full text-sm font-medium transition"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+              Invite
+            </button>
             <p v-if="actionError" class="text-xs text-red-600 max-w-[200px] sm:text-right">{{ actionError }}</p>
           </div>
         </div>
@@ -120,10 +129,77 @@
               </li>
             </ul>
           </div>
+
+          <!-- Club Reading List -->
+          <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-5">
+            <h2 class="text-xs font-bold text-stone-500 uppercase tracking-wider mb-4">Reading List</h2>
+            <p v-if="!club.books || club.books.length === 0" class="text-sm text-stone-400">No books added yet.</p>
+            <ul class="space-y-3">
+              <li
+                v-for="book in club.books"
+                :key="book.ISBN"
+                class="flex items-start gap-3"
+              >
+                <div
+                  class="w-9 h-12 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-inner"
+                  :class="bookColor(book.Genre)"
+                >
+                  {{ (book.Genre || 'BK').substring(0, 3).toUpperCase() }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-stone-900 text-sm leading-tight truncate">{{ book.Title }}</p>
+                  <p class="text-xs text-stone-400 mt-0.5">{{ book.Author }}</p>
+                  <span
+                    v-if="book.ReadingStatus"
+                    class="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                    :class="statusBadge(book.ReadingStatus)"
+                  >{{ book.ReadingStatus }}</span>
+                </div>
+              </li>
+            </ul>
+          </div>
         </div>
 
       </div>
     </div>
+
+    <!-- Invite member modal -->
+    <Transition enter-from-class="opacity-0" enter-active-class="transition duration-200" leave-to-class="opacity-0" leave-active-class="transition duration-200">
+      <div
+        v-if="showInviteModal"
+        class="fixed inset-0 bg-stone-900/50 z-50 flex items-center justify-center p-4"
+        @click.self="closeInviteModal"
+      >
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-stone-900">Invite to Club</h2>
+            <button @click="closeInviteModal" class="text-stone-400 hover:text-stone-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <p class="text-sm text-stone-500">Enter the username or email of the person you'd like to invite to <strong class="text-stone-800">{{ club?.Name }}</strong>.</p>
+          <input
+            v-model="inviteUsername"
+            type="text"
+            class="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-stone-50 transition"
+            placeholder="Username or email"
+            @keyup.enter="handleSendInvite"
+          />
+          <p v-if="inviteError" class="text-sm text-red-600">{{ inviteError }}</p>
+          <p v-if="inviteSuccess" class="text-sm text-teal-600 font-medium">{{ inviteSuccess }}</p>
+          <div class="flex gap-3 pt-1">
+            <button @click="closeInviteModal" class="flex-1 border border-stone-200 text-stone-600 py-2.5 rounded-xl text-sm font-medium hover:bg-stone-50 transition">Cancel</button>
+            <button
+              @click="handleSendInvite"
+              :disabled="inviteLoading || !inviteUsername.trim()"
+              class="flex-1 bg-amber-700 hover:bg-amber-800 disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-medium shadow-sm transition"
+            >
+              {{ inviteLoading ? 'Sending…' : 'Send Invite' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Private club passcode modal -->
     <Transition enter-from-class="opacity-0" enter-active-class="transition duration-200" leave-to-class="opacity-0" leave-active-class="transition duration-200">
@@ -169,6 +245,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getClub, joinClub, joinPrivateClub, leaveClub } from '@/api/club.js'
+import { sendInvitation } from '@/api/invitations.js'
 
 const route = useRoute()
 
@@ -180,6 +257,12 @@ const actionLoading = ref(false)
 const actionError = ref(null)
 const showPasscodeModal = ref(false)
 const passcode = ref('')
+
+const showInviteModal = ref(false)
+const inviteUsername = ref('')
+const inviteLoading = ref(false)
+const inviteError = ref(null)
+const inviteSuccess = ref(null)
 
 function timeAgo(iso) {
   const diff = Date.now() - new Date(iso).getTime()
@@ -254,6 +337,53 @@ async function handleLeave() {
   } finally {
     actionLoading.value = false
   }
+}
+
+function openInviteModal() {
+  inviteUsername.value = ''
+  inviteError.value = null
+  inviteSuccess.value = null
+  showInviteModal.value = true
+}
+
+function closeInviteModal() {
+  showInviteModal.value = false
+}
+
+async function handleSendInvite() {
+  if (!inviteUsername.value.trim()) return
+  inviteLoading.value = true
+  inviteError.value = null
+  inviteSuccess.value = null
+  try {
+    const result = await sendInvitation(inviteUsername.value.trim(), club.value.ClubID)
+    inviteSuccess.value = `Invitation sent to ${result.invitedUsername}!`
+    inviteUsername.value = ''
+  } catch (err) {
+    inviteError.value = err.message
+  } finally {
+    inviteLoading.value = false
+  }
+}
+
+function bookColor(genre) {
+  const map = {
+    Dystopian: 'bg-slate-600',
+    Classic: 'bg-stone-600',
+    Fiction: 'bg-teal-600',
+    Fantasy: 'bg-violet-600',
+    Drama: 'bg-rose-600',
+  }
+  return map[genre] || 'bg-amber-700'
+}
+
+function statusBadge(status) {
+  const map = {
+    'Currently Reading': 'bg-teal-50 text-teal-700',
+    'Finished': 'bg-stone-100 text-stone-600',
+    'Want to Read': 'bg-amber-50 text-amber-700',
+  }
+  return map[status] || 'bg-stone-100 text-stone-500'
 }
 
 onMounted(load)

@@ -50,6 +50,16 @@ router.get('/:id', requireAuth, async (req, res) => {
       [clubId]
     )
 
+    const [books] = await pool.execute(
+      `SELECT b.ISBN, b.Title, b.Author, b.Genre, b.PublishedYear,
+              r.ReadingStatus, r.DateFinished
+       FROM \`Reads\` r
+       INNER JOIN Book b ON b.ISBN = r.ISBN
+       WHERE r.ClubID = ?
+       ORDER BY b.Title ASC`,
+      [clubId]
+    )
+
     res.json({
       data: {
         ...club,
@@ -57,6 +67,7 @@ router.get('/:id', requireAuth, async (req, res) => {
         isMember: !!club.isMember,
         isModerator: !!club.isModerator,
         moderators,
+        books,
         recentThreads: recentThreads.map(t => ({ ...t, isReview: !!t.isReview }))
       },
       error: null

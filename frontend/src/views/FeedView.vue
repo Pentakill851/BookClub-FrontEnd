@@ -199,10 +199,15 @@
                 <div class="font-semibold text-sm text-stone-800">{{ club.Name }}</div>
                 <div class="text-xs text-stone-500 mt-0.5 line-clamp-2 leading-relaxed">{{ club.Description }}</div>
               </div>
-              <button class="text-xs font-semibold bg-stone-50 border border-stone-200 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 text-stone-600 py-2 px-3 rounded-lg transition w-full">
-                + Join Public Club
+              <button
+                @click="handleJoinRecommended(club)"
+                :disabled="joiningClub === club.ClubID"
+                class="text-xs font-semibold bg-stone-50 border border-stone-200 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 text-stone-600 py-2 px-3 rounded-lg transition w-full disabled:opacity-60"
+              >
+                {{ joiningClub === club.ClubID ? 'Joining…' : '+ Join Public Club' }}
               </button>
             </div>
+            <p v-if="joinError" class="text-xs text-red-600">{{ joinError }}</p>
           </div>
         </div>
 
@@ -218,6 +223,7 @@ import { getFeed, getInvitations, getMyClubs, getRecommendedClubs, acceptInvitat
 import { getMyBooks } from '../api/books.js'
 import { getMe } from '../api/auth.js'
 import { getProfileStats } from '../api/profile.js'
+import { joinClub } from '../api/communities.js'
 
 const router = useRouter()
 const loading = ref(true)
@@ -229,6 +235,23 @@ const threads = ref([])
 const recommendedClubs = ref([])
 const myBooks = ref([])
 const reviewCount = ref(0)
+const joiningClub = ref(null)
+const joinError = ref(null)
+
+async function handleJoinRecommended(club) {
+  joiningClub.value = club.ClubID
+  joinError.value = null
+  try {
+    await joinClub(club.ClubID)
+    // Remove the club from the list once joined
+    recommendedClubs.value = recommendedClubs.value.filter(c => c.ClubID !== club.ClubID)
+    myClubs.value = await getMyClubs()
+  } catch (err) {
+    joinError.value = err.message
+  } finally {
+    joiningClub.value = null
+  }
+}
 
 async function handleInvite(inviteID, action) {
   if (action === 'accept') {
