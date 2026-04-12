@@ -45,5 +45,9 @@ export async function createClub({ name, description, type, passcode }) {
   })
 }
 
+export async function deleteClub(clubID) {
+  return api(`/api/communities/${clubID}`, { method: 'DELETE' })
+}
+
 /** @deprecated Use getMyCommunities — kept for any stale imports */
 export const getMyCommmunities = getMyCommunities

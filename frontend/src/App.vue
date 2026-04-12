@@ -36,12 +36,43 @@
             <span v-if="pendingInviteCount > 0" class="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-white"></span>
           </RouterLink>
 
-          <RouterLink to="/profile" class="flex items-center gap-2 pl-5 border-l border-stone-200 group">
-            <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-stone-700 to-stone-900 flex items-center justify-center font-bold text-stone-50 shadow-sm ring-2 ring-transparent group-hover:ring-amber-200 transition">
-              A
+          <div class="relative pl-5 border-l border-stone-200">
+            <button
+              @click="profileDropdownOpen = !profileDropdownOpen"
+              class="flex items-center gap-2 group"
+            >
+              <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-stone-700 to-stone-900 flex items-center justify-center font-bold text-stone-50 shadow-sm ring-2 ring-transparent group-hover:ring-amber-200 transition">
+                A
+              </div>
+              <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+
+            <div
+              v-if="profileDropdownOpen"
+              class="absolute right-0 mt-2 w-40 bg-white border border-stone-200 rounded-xl shadow-lg z-50 overflow-hidden"
+            >
+              <RouterLink
+                to="/profile"
+                @click="profileDropdownOpen = false"
+                class="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 transition"
+              >
+                Profile
+              </RouterLink>
+              <button
+                @click="handleLogout"
+                class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition"
+              >
+                Log out
+              </button>
             </div>
-            <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </RouterLink>
+
+            <!-- click-outside overlay -->
+            <div
+              v-if="profileDropdownOpen"
+              class="fixed inset-0 z-40"
+              @click="profileDropdownOpen = false"
+            />
+          </div>
         </div>
 
       </div>
@@ -56,10 +87,18 @@
 import { ref, onMounted, provide } from 'vue'
 import { useRouter } from 'vue-router'
 import { getInvitationCount } from '@/api/invitations.js'
+import { logout } from '@/api/auth.js'
 
 const router = useRouter()
 const searchQuery = ref('')
 const pendingInviteCount = ref(0)
+const profileDropdownOpen = ref(false)
+
+async function handleLogout() {
+  profileDropdownOpen.value = false
+  await logout()
+  router.push('/login')
+}
 
 async function refreshInviteCount() {
   try {

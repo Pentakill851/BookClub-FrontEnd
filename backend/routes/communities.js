@@ -219,6 +219,47 @@ router.post('/', requireAuth, async (req, res) => {
   }
 })
 
+router.delete('/:id', requireAuth, async (req, res) => {
+  const clubId = Number.parseInt(req.params.id, 10)
+  if (!Number.isFinite(clubId)) {
+    return res.status(400).json({ data: null, error: 'Invalid club ID' })
+  }
+  const userId = req.session.userID
+
+  const conn = await pool.getConnection()
+  try {
+    await conn.beginTransaction()
+
+    // Verify the caller is a moderator of this club
+    const [modRows] = await conn.execute(
+      'SELECT 1 FROM Moderates WHERE UserID = ? AND ClubID = ?',
+      [userId, clubId]
+    )
+    if (modRows.length === 0) {
+      await conn.rollback()
+      return res.status(403).json({ data: null, error: 'Only moderators can delete a club' })
+    }
+
+    // Delete dependents in FK-safe order
+    // Thread ON DELETE CASCADE → Message + BookReview are auto-deleted
+    await conn.execute('DELETE FROM Thread WHERE ClubID = ?', [clubId])
+    await conn.execute('DELETE FROM `Reads` WHERE ClubID = ?', [clubId])
+    await conn.execute('DELETE FROM Invitation WHERE ClubID = ?', [clubId])
+    await conn.execute('DELETE FROM Moderates WHERE ClubID = ?', [clubId])
+    await conn.execute('DELETE FROM Joins WHERE ClubID = ?', [clubId])
+    // PrivateClub / PublicClub have ON DELETE CASCADE, deleted automatically
+    await conn.execute('DELETE FROM Club WHERE ClubID = ?', [clubId])
+
+    await conn.commit()
+    res.json({ data: { success: true }, error: null })
+  } catch (err) {
+    await conn.rollback()
+    res.status(500).json({ data: null, error: err.message })
+  } finally {
+    conn.release()
+  }
+})
+
 router.delete('/:id/leave', requireAuth, async (req, res) => {
   const clubId = Number.parseInt(req.params.id, 10)
   if (!Number.isFinite(clubId)) {

@@ -77,6 +77,15 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
               Invite
             </button>
+            <!-- Delete button — mods only -->
+            <button
+              v-if="club.isModerator"
+              @click="showDeleteModal = true"
+              class="flex items-center gap-1.5 border border-red-200 text-red-600 hover:bg-red-50 px-4 py-2 rounded-full text-sm font-medium transition"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              Delete Club
+            </button>
             <p v-if="actionError" class="text-xs text-red-600 max-w-[200px] sm:text-right">{{ actionError }}</p>
           </div>
         </div>
@@ -238,6 +247,39 @@
       </div>
     </Transition>
 
+    <!-- Delete club confirmation modal -->
+    <Transition enter-from-class="opacity-0" enter-active-class="transition duration-200" leave-to-class="opacity-0" leave-active-class="transition duration-200">
+      <div
+        v-if="showDeleteModal"
+        class="fixed inset-0 bg-stone-900/50 z-50 flex items-center justify-center p-4"
+        @click.self="showDeleteModal = false; deleteError = null"
+      >
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-stone-900">Delete Club</h2>
+            <button @click="showDeleteModal = false; deleteError = null" class="text-stone-400 hover:text-stone-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <p class="text-sm text-stone-600">
+            Are you sure you want to permanently delete <strong class="text-stone-900">{{ club?.Name }}</strong>?
+            This will remove all discussions, reading lists, and members. This cannot be undone.
+          </p>
+          <p v-if="deleteError" class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">{{ deleteError }}</p>
+          <div class="flex gap-3 pt-1">
+            <button @click="showDeleteModal = false; deleteError = null" class="flex-1 border border-stone-200 text-stone-600 py-2.5 rounded-xl text-sm font-medium hover:bg-stone-50 transition">Cancel</button>
+            <button
+              @click="handleDeleteClub"
+              :disabled="deleteLoading"
+              class="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-medium shadow-sm transition"
+            >
+              {{ deleteLoading ? 'Deleting…' : 'Delete Club' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
   </main>
 </template>
 
@@ -246,8 +288,11 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getClub, joinClub, joinPrivateClub, leaveClub } from '@/api/club.js'
 import { sendInvitation } from '@/api/invitations.js'
+import { deleteClub } from '@/api/communities.js'
+import { useRouter } from 'vue-router'
 
 const route = useRoute()
+const router = useRouter()
 
 const club = ref(null)
 const error = ref(null)
@@ -263,6 +308,10 @@ const inviteUsername = ref('')
 const inviteLoading = ref(false)
 const inviteError = ref(null)
 const inviteSuccess = ref(null)
+
+const showDeleteModal = ref(false)
+const deleteLoading = ref(false)
+const deleteError = ref(null)
 
 function timeAgo(iso) {
   const diff = Date.now() - new Date(iso).getTime()
@@ -363,6 +412,18 @@ async function handleSendInvite() {
     inviteError.value = err.message
   } finally {
     inviteLoading.value = false
+  }
+}
+
+async function handleDeleteClub() {
+  deleteLoading.value = true
+  deleteError.value = null
+  try {
+    await deleteClub(club.value.ClubID)
+    router.push('/communities')
+  } catch (err) {
+    deleteError.value = err.message
+    deleteLoading.value = false
   }
 }
 
