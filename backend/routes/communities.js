@@ -19,14 +19,12 @@ router.get('/my', requireAuth, async (req, res) => {
     const userId = req.session.userID
     const [rows] = await pool.execute(
       `SELECT c.ClubID AS ClubID, c.Name AS Name, c.Description AS Description,
-              CASE WHEN pc.ClubID IS NOT NULL THEN 'Private' ELSE 'Public' END AS type,
-              CASE WHEN m.UserID IS NOT NULL THEN 1 ELSE 0 END AS isModerator,
+              IF(EXISTS(SELECT 1 FROM PrivateClub WHERE ClubID = c.ClubID), 'Private', 'Public') AS type,
+              IF(EXISTS(SELECT 1 FROM Moderates WHERE ClubID = c.ClubID AND UserID = ?), 1, 0) AS isModerator,
               (SELECT COUNT(*) FROM Joins j2 WHERE j2.ClubID = c.ClubID) AS memberCount,
               ${currentBookSubquery}
        FROM Joins j
        INNER JOIN Club c ON c.ClubID = j.ClubID
-       LEFT JOIN PrivateClub pc ON pc.ClubID = c.ClubID
-       LEFT JOIN Moderates m ON m.ClubID = c.ClubID AND m.UserID = ?
        WHERE j.UserID = ?
        ORDER BY c.Name ASC`,
       [userId, userId]

@@ -50,12 +50,17 @@
             <li v-for="club in myClubs" :key="club.ClubID" @click="router.push('/club/' + club.ClubID)" class="flex items-center justify-between group cursor-pointer">
               <div>
                 <div class="font-medium text-sm text-stone-800 group-hover:text-amber-700 transition">{{ club.Name }}</div>
-                <div class="text-xs text-stone-400 mt-0.5 flex items-center gap-1">
+                <div class="text-xs text-stone-400 mt-0.5 flex items-center gap-1.5">
                   <span v-if="club.isModerator" class="text-amber-700 bg-amber-50 px-1.5 rounded flex items-center gap-0.5 border border-amber-100/50">
                     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z" clip-rule="evenodd" /></svg>
                     Mod
                   </span>
-                  <span v-else>{{ club.type }}</span>
+                  <span
+                    class="px-1.5 rounded border"
+                    :class="club.type === 'Private'
+                      ? 'bg-stone-100 text-stone-500 border-stone-200'
+                      : 'bg-teal-50 text-teal-700 border-teal-100'"
+                  >{{ club.type }}</span>
                 </div>
               </div>
               <svg class="w-4 h-4 text-stone-300 group-hover:text-amber-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
@@ -288,6 +293,7 @@ async function handleJoinRecommended(club) {
 async function handleInvite(inviteID, action) {
   if (action === 'accept') {
     await acceptInvitation(inviteID)
+    myClubs.value = await getMyClubs()
   } else {
     await declineInvitation(inviteID)
   }
