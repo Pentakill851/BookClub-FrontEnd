@@ -35,3 +35,21 @@ export async function leaveClub(clubID) {
     method: 'DELETE'
   })
 }
+
+export async function addBookToClub(clubID, isbn, status = 'Not Started') {
+  return api(`/api/club/${clubID}/books`, {
+    method: 'POST',
+    body: JSON.stringify({ isbn, status })
+  })
+}
+
+export async function updateClubBookStatus(clubID, isbn, status) {
+  return api(`/api/club/${clubID}/books/${isbn}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status })
+  })
+}
+
+export async function removeBookFromClub(clubID, isbn) {
+  return api(`/api/club/${clubID}/books/${isbn}`, { method: 'DELETE' })
+}

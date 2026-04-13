@@ -74,16 +74,7 @@
           <div class="flex-1">
             <RouterLink to="/compose" class="block w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-stone-400 hover:bg-white hover:border-amber-400 transition cursor-text">Draft a new discussion or log a review...</RouterLink>
             <div class="flex justify-between items-center mt-3">
-              <div class="flex gap-2">
-                <button class="text-xs font-medium text-stone-600 hover:text-amber-700 flex items-center gap-1 bg-stone-50 px-2 py-1.5 rounded-lg transition border border-stone-200/60">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                  Cite Book
-                </button>
-                <button class="text-xs font-medium text-stone-600 hover:text-amber-700 flex items-center gap-1 bg-stone-50 px-2 py-1.5 rounded-lg transition border border-stone-200/60">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
-                  Add Review
-                </button>
-              </div>
+              <div class="flex gap-2"></div>
               <button class="bg-amber-700 hover:bg-amber-800 text-white px-6 py-2 rounded-full text-sm font-medium shadow-sm transition">Publish</button>
             </div>
           </div>
@@ -92,17 +83,25 @@
         <div class="flex justify-between items-end pb-2 border-b border-stone-200">
           <h2 class="text-lg font-bold text-stone-900">The Reading Room</h2>
           <div class="flex gap-4 text-sm font-medium">
-            <span class="text-amber-700 border-b-2 border-amber-700 pb-2 cursor-pointer">My Circles</span>
-            <span class="text-stone-400 hover:text-stone-600 pb-2 cursor-pointer transition">Public Archive</span>
+            <span
+              @click="switchTab('circles')"
+              :class="activeTab === 'circles' ? 'text-amber-700 border-b-2 border-amber-700' : 'text-stone-400 hover:text-stone-600'"
+              class="pb-2 cursor-pointer transition"
+            >My Circles</span>
+            <span
+              @click="switchTab('public')"
+              :class="activeTab === 'public' ? 'text-amber-700 border-b-2 border-amber-700' : 'text-stone-400 hover:text-stone-600'"
+              class="pb-2 cursor-pointer transition"
+            >Public Archive</span>
           </div>
         </div>
 
         <div class="space-y-5">
-          <RouterLink
+          <div
             v-for="thread in threads"
             :key="thread.ThreadID"
-            :to="{ name: 'thread', params: { id: thread.ThreadID } }"
-            class="block bg-white border border-stone-200/60 rounded-2xl p-6 shadow-sm hover:shadow-md transition duration-200 no-underline"
+            @click="router.push({ name: 'thread', params: { id: thread.ThreadID } })"
+            class="block bg-white border border-stone-200/60 rounded-2xl p-6 shadow-sm hover:shadow-md transition duration-200 cursor-pointer"
           >
             <div class="flex justify-between items-start mb-4">
               <div class="flex items-center gap-2 text-xs font-medium text-stone-500">
@@ -142,17 +141,23 @@
               </div>
             </div>
 
-            <div class="ml-14 flex items-center gap-6 text-xs font-semibold text-stone-500 pt-3 border-t border-stone-100">
-              <span class="flex items-center gap-1.5">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                {{ thread.replyCount }} Replies
-              </span>
-              <span class="flex items-center gap-1.5">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                Like
-              </span>
+            <div class="ml-14 flex items-center justify-between pt-3 border-t border-stone-100">
+              <div class="flex items-center gap-6 text-xs font-semibold text-stone-500">
+                <span class="flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                  {{ thread.replyCount }} Replies
+                </span>
+              </div>
+              <button
+                v-if="activeTab === 'public'"
+                @click.stop="handleJoinFromThread(thread)"
+                :disabled="joiningClub === thread.ClubID"
+                class="text-xs font-semibold bg-amber-50 border border-amber-200 hover:bg-amber-100 hover:border-amber-300 text-amber-800 py-1.5 px-3 rounded-lg transition disabled:opacity-60"
+              >
+                {{ joiningClub === thread.ClubID ? 'Joining…' : '+ Join Club' }}
+              </button>
             </div>
-          </RouterLink>
+          </div>
         </div>
       </div>
 
@@ -219,7 +224,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getFeed, getInvitations, getMyClubs, getRecommendedClubs, acceptInvitation, declineInvitation } from '../api/feed.js'
+import { getFeed, getPublicFeed, getInvitations, getMyClubs, getRecommendedClubs, acceptInvitation, declineInvitation } from '../api/feed.js'
 import { getMyBooks } from '../api/books.js'
 import { getMe } from '../api/auth.js'
 import { getProfileStats } from '../api/profile.js'
@@ -237,6 +242,33 @@ const myBooks = ref([])
 const reviewCount = ref(0)
 const joiningClub = ref(null)
 const joinError = ref(null)
+const activeTab = ref('circles')
+
+async function handleJoinFromThread(thread) {
+  joiningClub.value = thread.ClubID
+  joinError.value = null
+  try {
+    await joinClub(thread.ClubID)
+    // Remove all threads from that club — user is now a member
+    threads.value = threads.value.filter(t => t.ClubID !== thread.ClubID)
+    myClubs.value = await getMyClubs()
+  } catch (err) {
+    joinError.value = err.message
+  } finally {
+    joiningClub.value = null
+  }
+}
+
+async function switchTab(tab) {
+  if (tab === activeTab.value) return
+  activeTab.value = tab
+  loading.value = true
+  try {
+    threads.value = tab === 'circles' ? await getFeed() : await getPublicFeed()
+  } finally {
+    loading.value = false
+  }
+}
 
 async function handleJoinRecommended(club) {
   joiningClub.value = club.ClubID

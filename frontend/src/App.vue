@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-stone-50 font-sans text-stone-800 selection:bg-amber-100 selection:text-amber-900 flex flex-col">
 
-    <nav class="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+    <nav v-if="route.name !== 'login'" class="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
       <div class="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16 items-center gap-8">
 
         <RouterLink to="/" class="flex items-center gap-2 text-xl font-bold tracking-tight text-stone-900 shrink-0">
@@ -42,7 +42,12 @@
               class="flex items-center gap-2 group"
             >
               <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-stone-700 to-stone-900 flex items-center justify-center font-bold text-stone-50 shadow-sm ring-2 ring-transparent group-hover:ring-amber-200 transition">
-                A
+                <template v-if="username">{{ username[0].toUpperCase() }}</template>
+                <template v-else>
+                  <svg class="w-5 h-5 text-stone-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                  </svg>
+                </template>
               </div>
               <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
@@ -84,20 +89,37 @@
 </template>
 
 <script setup>
-import { ref, onMounted, provide } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch, provide } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { getInvitationCount } from '@/api/invitations.js'
 import { logout } from '@/api/auth.js'
 
 const router = useRouter()
+const route = useRoute()
 const searchQuery = ref('')
 const pendingInviteCount = ref(0)
 const profileDropdownOpen = ref(false)
+const username = ref('')
 
 async function handleLogout() {
   profileDropdownOpen.value = false
   await logout()
+  username.value = ''
   router.push('/login')
+}
+
+async function refreshUsername() {
+  try {
+    const res = await fetch('/api/auth/me', { credentials: 'include' })
+    if (res.ok) {
+      const result = await res.json()
+      username.value = result.data?.username ?? ''
+    } else {
+      username.value = ''
+    }
+  } catch {
+    username.value = ''
+  }
 }
 
 async function refreshInviteCount() {
@@ -111,7 +133,17 @@ async function refreshInviteCount() {
 
 provide('refreshInviteCount', refreshInviteCount)
 
-onMounted(refreshInviteCount)
+onMounted(() => {
+  refreshUsername()
+  refreshInviteCount()
+})
+
+watch(
+  () => route.name,
+  (name) => {
+    if (name && name !== 'login') refreshUsername()
+  }
+)
 
 function goToSearch() {
   if (searchQuery.value.trim()) {

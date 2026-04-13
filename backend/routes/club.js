@@ -4,6 +4,20 @@ import { requireAuth } from '../middleware/requireAuth.js'
 
 const router = express.Router()
 
+const READING_STATUS_VALUES = ['Not Started', 'In Progress', 'Finished']
+
+async function requireModerator(req, res, clubId) {
+  const [[row]] = await pool.execute(
+    'SELECT 1 FROM Moderates WHERE UserID = ? AND ClubID = ?',
+    [req.session.userID, clubId]
+  )
+  if (!row) {
+    res.status(403).json({ data: null, error: 'Only moderators can modify the reading list' })
+    return false
+  }
+  return true
+}
+
 router.get('/:id', requireAuth, async (req, res) => {
   const clubId = Number(req.params.id)
   if (!Number.isFinite(clubId)) {
@@ -72,6 +86,100 @@ router.get('/:id', requireAuth, async (req, res) => {
       },
       error: null
     })
+  } catch (err) {
+    res.status(500).json({ data: null, error: err.message })
+  }
+})
+
+// POST /api/club/:id/books — add a book to the club reading list (moderators only)
+router.post('/:id/books', requireAuth, async (req, res) => {
+  const clubId = Number(req.params.id)
+  if (!Number.isFinite(clubId)) {
+    return res.status(400).json({ data: null, error: 'Invalid club ID' })
+  }
+  if (!await requireModerator(req, res, clubId)) return
+
+  const isbn = typeof req.body?.isbn === 'string' ? req.body.isbn.trim() : ''
+  if (!isbn) {
+    return res.status(400).json({ data: null, error: 'isbn is required' })
+  }
+
+  const statusRaw = typeof req.body?.status === 'string' ? req.body.status.trim() : ''
+  const status = READING_STATUS_VALUES.includes(statusRaw) ? statusRaw : 'Not Started'
+
+  try {
+    const [[book]] = await pool.execute(
+      'SELECT ISBN, Title, Author, Genre, PublishedYear FROM Book WHERE ISBN = ?',
+      [isbn]
+    )
+    if (!book) {
+      return res.status(404).json({ data: null, error: 'Book not found' })
+    }
+
+    await pool.execute(
+      `INSERT INTO \`Reads\` (ISBN, ClubID, ReadingStatus, DateFinished)
+       VALUES (?, ?, ?, NULL)
+       ON DUPLICATE KEY UPDATE ReadingStatus = VALUES(ReadingStatus)`,
+      [isbn, clubId, status]
+    )
+
+    res.json({ data: { ...book, ReadingStatus: status, DateFinished: null }, error: null })
+  } catch (err) {
+    res.status(500).json({ data: null, error: err.message })
+  }
+})
+
+// PATCH /api/club/:id/books/:isbn/status — update reading status (moderators only)
+router.patch('/:id/books/:isbn/status', requireAuth, async (req, res) => {
+  const clubId = Number(req.params.id)
+  if (!Number.isFinite(clubId)) {
+    return res.status(400).json({ data: null, error: 'Invalid club ID' })
+  }
+  if (!await requireModerator(req, res, clubId)) return
+
+  const { isbn } = req.params
+  const statusRaw = typeof req.body?.status === 'string' ? req.body.status.trim() : ''
+  if (!READING_STATUS_VALUES.includes(statusRaw)) {
+    return res.status(400).json({
+      data: null,
+      error: 'status must be Not Started, In Progress, or Finished'
+    })
+  }
+
+  const dateFinished = statusRaw === 'Finished' ? new Date().toISOString().slice(0, 10) : null
+
+  try {
+    const [result] = await pool.execute(
+      'UPDATE `Reads` SET ReadingStatus = ?, DateFinished = ? WHERE ISBN = ? AND ClubID = ?',
+      [statusRaw, dateFinished, isbn, clubId]
+    )
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ data: null, error: 'Book not in this club\'s reading list' })
+    }
+    res.json({ data: { ISBN: isbn, ReadingStatus: statusRaw, DateFinished: dateFinished }, error: null })
+  } catch (err) {
+    res.status(500).json({ data: null, error: err.message })
+  }
+})
+
+// DELETE /api/club/:id/books/:isbn — remove a book from the reading list (moderators only)
+router.delete('/:id/books/:isbn', requireAuth, async (req, res) => {
+  const clubId = Number(req.params.id)
+  if (!Number.isFinite(clubId)) {
+    return res.status(400).json({ data: null, error: 'Invalid club ID' })
+  }
+  if (!await requireModerator(req, res, clubId)) return
+
+  const { isbn } = req.params
+  try {
+    const [result] = await pool.execute(
+      'DELETE FROM `Reads` WHERE ISBN = ? AND ClubID = ?',
+      [isbn, clubId]
+    )
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ data: null, error: 'Book not in this club\'s reading list' })
+    }
+    res.json({ data: { success: true }, error: null })
   } catch (err) {
     res.status(500).json({ data: null, error: err.message })
   }

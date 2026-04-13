@@ -21,6 +21,16 @@ export async function getFeed() {
   }))
 }
 
+export async function getPublicFeed() {
+  const res = await fetch('/api/feed/public', { credentials: 'include' })
+  const result = await res.json()
+  if (result.error) throw new Error(result.error)
+  return result.data.map(thread => ({
+    ...thread,
+    timeAgo: timeAgo(thread.CreatedAt)
+  }))
+}
+
 export async function getInvitations() {
   const data = await getInvitationsAPI()
   return data

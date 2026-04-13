@@ -141,7 +141,18 @@
 
           <!-- Club Reading List -->
           <div class="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-5">
-            <h2 class="text-xs font-bold text-stone-500 uppercase tracking-wider mb-4">Reading List</h2>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xs font-bold text-stone-500 uppercase tracking-wider">Reading List</h2>
+              <button
+                v-if="club.isModerator"
+                @click="openAddBookModal"
+                class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition flex items-center gap-1"
+              >
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                Add Book
+              </button>
+            </div>
+            <p v-if="bookActionError" class="text-xs text-red-600 mb-3">{{ bookActionError }}</p>
             <p v-if="!club.books || club.books.length === 0" class="text-sm text-stone-400">No books added yet.</p>
             <ul class="space-y-3">
               <li
@@ -158,8 +169,28 @@
                 <div class="flex-1 min-w-0">
                   <p class="font-semibold text-stone-900 text-sm leading-tight truncate">{{ book.Title }}</p>
                   <p class="text-xs text-stone-400 mt-0.5">{{ book.Author }}</p>
+                  <!-- Moderator: status selector + remove -->
+                  <div v-if="club.isModerator" class="mt-1.5 flex flex-wrap gap-1 items-center">
+                    <button
+                      v-for="s in READING_STATUSES"
+                      :key="s"
+                      @click="handleBookStatusChange(book, s)"
+                      class="text-[10px] font-semibold px-1.5 py-0.5 rounded border transition"
+                      :class="book.ReadingStatus === s
+                        ? statusBadge(s) + ' border-transparent'
+                        : 'bg-white text-stone-400 border-stone-200 hover:border-stone-300 hover:text-stone-600'"
+                    >{{ s }}</button>
+                    <button
+                      @click="handleRemoveBook(book.ISBN)"
+                      class="ml-auto text-[10px] text-red-400 hover:text-red-600 transition"
+                      title="Remove from list"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                  <!-- Non-moderator: read-only badge -->
                   <span
-                    v-if="book.ReadingStatus"
+                    v-else-if="book.ReadingStatus"
                     class="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
                     :class="statusBadge(book.ReadingStatus)"
                   >{{ book.ReadingStatus }}</span>
@@ -247,6 +278,99 @@
       </div>
     </Transition>
 
+    <!-- Add Book modal (moderator only) -->
+    <Transition enter-from-class="opacity-0" enter-active-class="transition duration-200" leave-to-class="opacity-0" leave-active-class="transition duration-200">
+      <div
+        v-if="showAddBookModal"
+        class="fixed inset-0 bg-stone-900/50 z-50 flex items-center justify-center p-4"
+        @click.self="showAddBookModal = false"
+      >
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-stone-900">Add Book to Reading List</h2>
+            <button @click="showAddBookModal = false" class="text-stone-400 hover:text-stone-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+
+          <!-- Search input -->
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <svg v-if="!addBookSearching" class="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <div v-else class="w-4 h-4 border-2 border-stone-200 border-t-amber-600 rounded-full animate-spin"></div>
+            </div>
+            <input
+              v-model="addBookQuery"
+              @input="onAddBookSearch"
+              type="text"
+              autofocus
+              class="w-full pl-10 pr-4 py-2.5 border border-stone-200 rounded-xl text-sm bg-stone-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition"
+              placeholder="Search by title, author, or genre…"
+            />
+          </div>
+
+          <!-- Search results -->
+          <ul v-if="addBookResults.length > 0" class="border border-stone-200 rounded-xl overflow-hidden divide-y divide-stone-100 max-h-56 overflow-y-auto">
+            <li
+              v-for="book in addBookResults"
+              :key="book.ISBN"
+              @click="selectBook(book)"
+              class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-amber-50 transition"
+              :class="addBookSelected?.ISBN === book.ISBN ? 'bg-amber-50' : ''"
+            >
+              <div class="w-8 h-10 rounded flex items-center justify-center text-[9px] font-bold text-white shrink-0 shadow-inner" :class="bookColor(book.Genre)">
+                {{ (book.Genre || 'BK').substring(0, 3).toUpperCase() }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-stone-900 truncate">{{ book.Title }}</p>
+                <p class="text-xs text-stone-400 truncate">{{ book.Author }} · {{ book.PublishedYear }}</p>
+              </div>
+              <svg v-if="addBookSelected?.ISBN === book.ISBN" class="w-4 h-4 text-amber-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+            </li>
+          </ul>
+          <p v-else-if="addBookQuery.trim() && !addBookSearching" class="text-sm text-stone-400 text-center py-2">No books found.</p>
+
+          <!-- Selected book confirmation -->
+          <div v-if="addBookSelected" class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+            <div class="w-8 h-10 rounded flex items-center justify-center text-[9px] font-bold text-white shrink-0 shadow-inner" :class="bookColor(addBookSelected.Genre)">
+              {{ (addBookSelected.Genre || 'BK').substring(0, 3).toUpperCase() }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-stone-900 truncate">{{ addBookSelected.Title }}</p>
+              <p class="text-xs text-stone-500 truncate">{{ addBookSelected.Author }}</p>
+            </div>
+          </div>
+
+          <!-- Status selector -->
+          <div v-if="addBookSelected">
+            <label class="text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2 block">Status</label>
+            <div class="flex gap-2 flex-wrap">
+              <label
+                v-for="s in READING_STATUSES"
+                :key="s"
+                class="flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-xl border text-sm transition"
+                :class="addBookStatus === s ? 'border-amber-500 bg-amber-50 text-amber-800' : 'border-stone-200 text-stone-600 hover:border-stone-300'"
+              >
+                <input type="radio" :value="s" v-model="addBookStatus" class="sr-only">
+                {{ s }}
+              </label>
+            </div>
+          </div>
+
+          <p v-if="addBookError" class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">{{ addBookError }}</p>
+
+          <div class="flex gap-3 pt-1">
+            <button @click="showAddBookModal = false" class="flex-1 border border-stone-200 text-stone-600 py-2.5 rounded-xl text-sm font-medium hover:bg-stone-50 transition">Cancel</button>
+            <button
+              @click="handleAddBook"
+              :disabled="addBookLoading || !addBookSelected"
+              class="flex-1 bg-amber-700 hover:bg-amber-800 disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-medium shadow-sm transition"
+            >{{ addBookLoading ? 'Adding…' : 'Add Book' }}</button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- Delete club confirmation modal -->
     <Transition enter-from-class="opacity-0" enter-active-class="transition duration-200" leave-to-class="opacity-0" leave-active-class="transition duration-200">
       <div
@@ -285,11 +409,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { getClub, joinClub, joinPrivateClub, leaveClub } from '@/api/club.js'
+import { useRoute, useRouter } from 'vue-router'
+import { getClub, joinClub, joinPrivateClub, leaveClub, addBookToClub, updateClubBookStatus, removeBookFromClub } from '@/api/club.js'
 import { sendInvitation } from '@/api/invitations.js'
 import { deleteClub } from '@/api/communities.js'
-import { useRouter } from 'vue-router'
+import { searchBooks } from '@/api/search.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -427,6 +551,84 @@ async function handleDeleteClub() {
   }
 }
 
+// ── Reading list (moderator only) ──────────────────────────────────────────
+const READING_STATUSES = ['Not Started', 'In Progress', 'Finished']
+const showAddBookModal = ref(false)
+const addBookQuery = ref('')
+const addBookResults = ref([])
+const addBookSearching = ref(false)
+const addBookSelected = ref(null)
+const addBookStatus = ref('Not Started')
+const addBookLoading = ref(false)
+const addBookError = ref(null)
+const bookActionError = ref(null)
+
+let searchTimer = null
+async function onAddBookSearch() {
+  addBookSelected.value = null
+  const q = addBookQuery.value.trim()
+  if (!q) { addBookResults.value = []; return }
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(async () => {
+    addBookSearching.value = true
+    addBookResults.value = await searchBooks(q)
+    addBookSearching.value = false
+  }, 250)
+}
+
+function selectBook(book) {
+  addBookSelected.value = book
+  addBookQuery.value = book.Title
+  addBookResults.value = []
+}
+
+function openAddBookModal() {
+  addBookQuery.value = ''
+  addBookResults.value = []
+  addBookSelected.value = null
+  addBookStatus.value = 'Not Started'
+  addBookError.value = null
+  showAddBookModal.value = true
+}
+
+async function handleAddBook() {
+  if (!addBookSelected.value) return
+  addBookLoading.value = true
+  addBookError.value = null
+  try {
+    const book = await addBookToClub(club.value.ClubID, addBookSelected.value.ISBN, addBookStatus.value)
+    club.value.books.push(book)
+    showAddBookModal.value = false
+  } catch (err) {
+    addBookError.value = err.message
+  } finally {
+    addBookLoading.value = false
+  }
+}
+
+async function handleBookStatusChange(book, status) {
+  const prev = book.ReadingStatus
+  book.ReadingStatus = status
+  bookActionError.value = null
+  try {
+    const updated = await updateClubBookStatus(club.value.ClubID, book.ISBN, status)
+    book.DateFinished = updated.DateFinished
+  } catch (err) {
+    book.ReadingStatus = prev
+    bookActionError.value = err.message
+  }
+}
+
+async function handleRemoveBook(isbn) {
+  bookActionError.value = null
+  try {
+    await removeBookFromClub(club.value.ClubID, isbn)
+    club.value.books = club.value.books.filter(b => b.ISBN !== isbn)
+  } catch (err) {
+    bookActionError.value = err.message
+  }
+}
+
 function bookColor(genre) {
   const map = {
     Dystopian: 'bg-slate-600',
@@ -440,9 +642,12 @@ function bookColor(genre) {
 
 function statusBadge(status) {
   const map = {
+    'In Progress':  'bg-teal-50 text-teal-700',
+    'Finished':     'bg-stone-100 text-stone-600',
+    'Not Started':  'bg-amber-50 text-amber-700',
+    // legacy values from seed data
     'Currently Reading': 'bg-teal-50 text-teal-700',
-    'Finished': 'bg-stone-100 text-stone-600',
-    'Want to Read': 'bg-amber-50 text-amber-700',
+    'Want to Read':      'bg-amber-50 text-amber-700',
   }
   return map[status] || 'bg-stone-100 text-stone-500'
 }
